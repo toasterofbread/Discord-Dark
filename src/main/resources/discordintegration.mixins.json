@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.spectreseven1138.discordintegration.mixins",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+  ],
+  "client": [
+    "Client",
+    "HUD",
+    "Hand"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

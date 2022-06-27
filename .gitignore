@@ -1,0 +1,18 @@
+# Gradle
+.gradle/
+build/
+out/
+classes/
+
+# VSCode
+.settings/
+.vscode/
+bin/
+.classpath
+.project
+
+# Fabric
+run/
+
+# Project
+install.sh

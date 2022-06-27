@@ -1,0 +1,21 @@
+{
+    "title.discordintegration.config": "Discord Integration",
+    "category.discordintegration.general": "General",
+    "category.discordintegration.server": "Server",
+
+    "config.discordintegration.bot_token": "Bot API token",
+    "config.discordintegration.bot_token.tooltip": "API token of a bot from the Discord Developer Portal",
+    "config.discordintegration.play_sounds": "Play sounds",
+    "config.discordintegration.play_sounds.tooltip": "Enable sounds triggered by commands",
+    "config.discordintegration.show_debug_messages": "Show debug messages",
+    "config.discordintegration.show_debug_messages.tooltip": "Enable debug messages",
+
+    "config.discordintegration.guild_id": "Guild ID",
+    "config.discordintegration.guild_id.tooltip": "ID of the guild containing the channels below",
+    "config.discordintegration.location_channel_id": "Location channel ID",
+    "config.discordintegration.location_channel_id.tooltip": "Channel in which to send locations marked using /marklocation",
+    "config.discordintegration.screenshot_channel_id": "Screenshot channel ID",
+    "config.discordintegration.screenshot_channel_id.tooltip": "Channel in which to send screenshots saved with /uploadscreenshot",
+    "config.discordintegration.backend_channel_id": "Backend channel ID",
+    "config.discordintegration.backend_channel_id.tooltip": "Channel to use for the backend, including image storage (muting it is recommended)"
+}
