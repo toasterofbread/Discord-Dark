@@ -1,6 +1,6 @@
-package com.spectreseven1138.discordintegration.mixins;
+package com.spectreseven1138.discorddark.mixins;
 
-import com.spectreseven1138.discordintegration.DiscordIntegration;
+import com.spectreseven1138.discorddark.DiscordDark;
 
 import org.spongepowered.asm.mixin.Mixin;
 import net.minecraft.client.render.item.HeldItemRenderer;
@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class Hand {
     @Inject(at=@At("HEAD"), cancellable = true, method = "renderItem(FLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;Lnet/minecraft/client/network/ClientPlayerEntity;I)V")
     public void render(CallbackInfo info) {
-        if (DiscordIntegration.awaiting_screenshot == 2) {
+        if (DiscordDark.screenshot_request.shouldHideHand()) {
             info.cancel();
         }
     }

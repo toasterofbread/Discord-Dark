@@ -1,4 +1,4 @@
-package com.spectreseven1138.discordintegration;
+package com.spectreseven1138.discorddark;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -38,7 +38,7 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Method;
 import com.google.gson.Gson;
 
-import com.spectreseven1138.discordintegration.Config;
+import com.spectreseven1138.discorddark.Config;
 
 public class Bot extends ListenerAdapter {
 
@@ -210,7 +210,11 @@ public class Bot extends ListenerAdapter {
         }
     }
 
-    public void markLocation(String name, NativeImage image, PlayerEntity player) {
+    enum EmbedType {
+        MARK_LOCATION, SCREENSHOT
+    }
+
+    public void sendEmbed(EmbedType type, String name, NativeImage image, PlayerEntity player) {
 
         if (Config.get().guild_id == 0L) {
             logger.log("No guild ID set", 2, false);
@@ -226,9 +230,17 @@ public class Bot extends ListenerAdapter {
             logger.log("No location channel ID set", 2, false);
             return;
         }
-        MessageChannel location_channel = guild.getTextChannelById(Config.get().location_channel_id);
-        if (location_channel == null) {
-            logger.log(String.format("Could not get location channel with ID '%d'", Config.get().location_channel_id), 2, false);
+
+        long channel_id;
+        switch (type) {
+            case MARK_LOCATION: channel_id = Config.get().location_channel_id; break;
+            case SCREENSHOT: channel_id = Config.get().screenshot_channel_id; break;
+            default: channel_id = 0L;
+        }
+
+        MessageChannel channel = guild.getTextChannelById(channel_id);
+        if (channel == null) {
+            logger.log(String.format("Could not get channel with ID '%d'", channel_id), 2, false);
             return;
         }
 
@@ -254,29 +266,34 @@ public class Bot extends ListenerAdapter {
         double x = player.getX(), y = player.getY(), z = player.getZ();
 
         World world = player.world;
-        String dimension = world.getRegistryKey().getValue().toString();
         String player_name = player.getDisplayName().getString();
 
         EmbedBuilder embed = new EmbedBuilder();
         embed.setTitle(name, null);
-        
-        switch (dimension) {
-            case "minecraft:overworld": embed.setColor(Color.green); dimension = "Overworld"; break;
-            case "minecraft:the_nether": embed.setColor(Color.red); dimension = "Nether"; break;
-            case "minecraft:the_end": embed.setColor(Color.magenta); dimension = "The End"; break;
-            default: embed.setColor(Color.gray); break;
-        }
-        
-        String biome = world.getBiomeAccess().getBiome(new BlockPos(x, y, z)).getKey().get().getValue().toString();
 
-        if (biome.startsWith("minecraft:")) {
-            biome = biome.substring(10).replace("_", " ");
-            biome = biome.substring(0, 1).toUpperCase() + biome.substring(1);
-        }
+        if (type == EmbedType.MARK_LOCATION) {
+            String dimension = world.getRegistryKey().getValue().toString();
+            switch (dimension) {
+                case "minecraft:overworld": embed.setColor(Color.green); dimension = "Overworld"; break;
+                case "minecraft:the_nether": embed.setColor(Color.red); dimension = "Nether"; break;
+                case "minecraft:the_end": embed.setColor(Color.magenta); dimension = "The End"; break;
+                default: embed.setColor(Color.gray); break;
+            }
 
-        embed.addField("Coordinates", String.format("%d, %d, %d", (int)Math.round(x), (int)Math.round(y), (int)Math.round(z)), true);
-        embed.addField("Biome", biome, true);
-        embed.addField("Dimension", dimension, true);
+            String biome = world.getBiomeAccess().getBiome(new BlockPos(x, y, z)).getKey().get().getValue().toString();
+
+            if (biome.startsWith("minecraft:")) {
+                biome = biome.substring(10).replace("_", " ");
+                biome = biome.substring(0, 1).toUpperCase() + biome.substring(1);
+            }
+
+            embed.addField("Coordinates", String.format("%d, %d, %d", (int)Math.round(x), (int)Math.round(y), (int)Math.round(z)), true);
+            embed.addField("Biome", biome, true);
+            embed.addField("Dimension", dimension, true);
+        }
+        else if (type == EmbedType.SCREENSHOT) {
+            embed.setFooter(String.format("%d, %d, %d", (int)Math.round(x), (int)Math.round(y), (int)Math.round(z)));
+        }
 
         embed.setAuthor(player_name, null, String.format("https://mc-heads.net/avatar/%s.png", player_name));
 
@@ -293,8 +310,16 @@ public class Bot extends ListenerAdapter {
         
         backend_channel.sendFile(bytes, "screenshot.png").queue(response -> {
             embed.setImage(response.getAttachments().get(0).getUrl());
-            location_channel.sendMessageEmbeds(embed.build()).queue();
-            logger.log(String.format("Location marked in [%s | #%s]", guild.getName(), location_channel.getName()), 0, false);
+            channel.sendMessageEmbeds(embed.build()).queue();
+
+            String message;
+            switch (type) {
+                case MARK_LOCATION: message = "Location marked in [%s | #%s]"; break;
+                case SCREENSHOT: message = "Screenshot uploaded to [%s | #%s]"; break;
+                default: message = "";
+            }
+
+            logger.log(String.format(message, guild.getName(), channel.getName()), 0, false);
         });
     }
 

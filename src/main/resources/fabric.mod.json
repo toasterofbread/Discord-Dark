@@ -1,29 +1,29 @@
 {
   "schemaVersion": 1,
-  "id": "discordintegration",
+  "id": "discorddark",
   "version": "1.0.0",
-  "name": "Discord Integration",
+  "name": "Discord-Dark",
   "description": "Adds commands which allow interaction between Minecraft and a Discord bot",
   "authors": [
     "spectreseven1138"
   ],
   "contributors": [],
   "contact": {
-    "homepage": "https://github.com/spectreseven1138/MCDiscordIntegration",
-    "issues": "https://github.com/spectreseven1138/MCDiscordIntegration/issues",
-    "sources": "https://github.com/spectreseven1138/MCDiscordIntegration"
+    "homepage": "https://github.com/spectreseven1138/Discord-Dark",
+    "issues": "https://github.com/spectreseven1138/Discord-Dark/issues",
+    "sources": "https://github.com/spectreseven1138/Discord-Dark"
   },
   "license": "MIT",
-  "icon": "assets/discordintegration/icon.png",
+  "icon": "assets/discorddark/icon.png",
   "environment": "*",
   "entrypoints": {
     "main": [],
-    "client": ["com.spectreseven1138.discordintegration.DiscordIntegration"],
+    "client": ["com.spectreseven1138.discorddark.DiscordDark"],
     "server": [],
-    "modmenu": ["com.spectreseven1138.discordintegration.ModMenuApiImpl"]
+    "modmenu": ["com.spectreseven1138.discorddark.ModMenuApiImpl"]
   },
   "mixins": [
-    "discordintegration.mixins.json"
+    "discorddark.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.14.8",

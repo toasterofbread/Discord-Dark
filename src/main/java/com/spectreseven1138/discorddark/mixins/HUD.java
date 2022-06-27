@@ -1,6 +1,6 @@
-package com.spectreseven1138.discordintegration.mixins;
+package com.spectreseven1138.discorddark.mixins;
 
-import com.spectreseven1138.discordintegration.DiscordIntegration;
+import com.spectreseven1138.discorddark.DiscordDark;
 
 import net.minecraft.client.gui.hud.*;
 import net.minecraft.client.util.math.MatrixStack;
@@ -188,7 +188,7 @@ public abstract class HUD {
 
     @Inject(at=@At("HEAD"), method = "render", cancellable = true)
     public void render(CallbackInfo info) {
-        if (DiscordIntegration.awaiting_screenshot == 2) {
+        if (DiscordDark.screenshot_request.shouldHideHud()) {
             info.cancel();
         }
     }

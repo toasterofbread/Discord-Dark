@@ -1,4 +1,4 @@
-package com.spectreseven1138.discordintegration;
+package com.spectreseven1138.discorddark;
 
 import java.util.List;
 
