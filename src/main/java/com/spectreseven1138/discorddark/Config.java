@@ -19,7 +19,7 @@ import java.nio.file.Path;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 
-import com.spectreseven1138.discorddark.Translatable;
+import com.spectreseven1138.discorddark.Utils.Translatable;
 
 class ConfigFormat {
     String bot_token = "";

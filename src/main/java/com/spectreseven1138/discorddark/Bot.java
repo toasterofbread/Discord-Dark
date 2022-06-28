@@ -3,16 +3,12 @@ package com.spectreseven1138.discorddark;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.MessageChannel;
-import net.dv8tion.jda.api.entities.Activity;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Icon;
-import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.MessageHistory;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.texture.NativeImage;
@@ -39,6 +35,7 @@ import java.lang.reflect.Method;
 import com.google.gson.Gson;
 
 import com.spectreseven1138.discorddark.Config;
+import com.spectreseven1138.discorddark.Utils;
 
 public class Bot extends ListenerAdapter {
 
@@ -226,16 +223,16 @@ public class Bot extends ListenerAdapter {
             return;
         }
 
-        if (Config.get().location_channel_id == 0L) {
-            logger.log("No location channel ID set", 2, false);
-            return;
-        }
-
         long channel_id;
         switch (type) {
             case MARK_LOCATION: channel_id = Config.get().location_channel_id; break;
             case SCREENSHOT: channel_id = Config.get().screenshot_channel_id; break;
             default: channel_id = 0L;
+        }
+
+        if (channel_id == 0L) {
+            logger.log("No channel ID set", 2, false);
+            return;
         }
 
         MessageChannel channel = guild.getTextChannelById(channel_id);
@@ -290,12 +287,12 @@ public class Bot extends ListenerAdapter {
                 biome = biome.substring(0, 1).toUpperCase() + biome.substring(1);
             }
 
-            embed.addField("Coordinates", String.format("%d, %d, %d", (int)Math.round(x), (int)Math.round(y), (int)Math.round(z)), true);
+            embed.addField("Coordinates", String.format("%.1f, %.1f, %.1f", x, y, z), true);
             embed.addField("Biome", biome, true);
             embed.addField("Dimension", dimension, true);
         }
         else if (type == EmbedType.SCREENSHOT) {
-            embed.setFooter(String.format("%d, %d, %d", (int)Math.round(x), (int)Math.round(y), (int)Math.round(z)));
+            embed.setFooter(String.format("%.1f, %.1f, %.1f", x, y, z));
         }
 
         embed.setAuthor(player_name, null, String.format("https://mc-heads.net/avatar/%s.png", player_name));
@@ -324,6 +321,102 @@ public class Bot extends ListenerAdapter {
 
             logger.log(String.format(message, guild.getName(), channel.getName()), 0, false);
         });
+    }
+
+    public class MarkedLocation {
+        String name;
+        String biome;
+        String dimension;
+        String player_name;
+        String image_url;
+        double x;
+        double y;
+        double z;
+        int i = 0;
+    }
+
+    public String iterateLocationEmbeds(Utils.ValueCallback<MarkedLocation, Boolean> callback) {
+        if (Config.get().guild_id == 0L) {
+            return "No guild ID set";
+        }
+        Guild guild = bot.getGuildById(Config.get().guild_id);
+        if (guild == null) {
+            return String.format("Could not get guild with ID '%d'", Config.get().guild_id);
+        }
+
+        if (Config.get().location_channel_id == 0L) {
+            return "No location channel ID set";
+        }
+        MessageChannel channel = guild.getTextChannelById(Config.get().location_channel_id);
+        if (channel == null) {
+            return String.format("Could not get channel with ID '%d'", Config.get().location_channel_id);
+        }
+        
+        User self = bot.getSelfUser();
+
+        channel.getIterableHistory().forEachAsync(message -> {
+            if (!message.getAuthor().equals(self)) {
+                return true;
+            }
+
+            List<MessageEmbed> embeds = message.getEmbeds();
+            if (embeds.isEmpty()) {
+                return true;
+            }
+
+            MessageEmbed embed = embeds.get(0);
+            
+            MarkedLocation location = new MarkedLocation();
+            location.name = embed.getTitle();
+            location.player_name = embed.getAuthor().getName();
+            location.image_url = embed.getImage().getUrl();
+
+            for (MessageEmbed.Field field : embed.getFields()) {
+                if (!field.isInline()) {
+                    continue;
+                }
+
+                switch (field.getName()) {
+                    case "Coordinates": {
+                        
+                        final String value = field.getValue();
+                        String current = "";
+
+                        int index = 0;
+
+                        for (int i = 0, length = value.length(); i < length; i++) {
+                            final char c = value.charAt(i);
+                            if (c == ' ') {
+                                continue;
+                            }
+                            if (c == ',') {
+                                if (index++ == 0) {
+                                    location.x = Double.parseDouble(current);
+                                }
+                                else {
+                                    location.y = Double.parseDouble(current);
+                                }
+                                current = "";
+                            }
+                            else {
+                                current += c;
+                            }
+                        }
+
+                        location.z = Double.parseDouble(current);
+
+                        break;
+                    }
+                    case "Biome": location.biome = field.getValue(); break;
+                    case "Dimension": location.dimension = field.getValue(); break;
+                }
+            }
+
+            location.i++;
+            return callback.call(location);
+        });
+
+        return "";
     }
 
     private void send(MessageReceivedEvent event, String message) {

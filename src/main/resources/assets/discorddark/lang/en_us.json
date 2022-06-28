@@ -8,6 +8,7 @@
     "category.discorddark.debug": "Debug",
     
     "command.discorddark.marklocation": "marklocation",
+    "command.discorddark.findlocation": "findlocation",
     "command.discorddark.screenshot": "screenshot",
 
     "config.discorddark.marklocation_hide_hud": "Hide HUD",

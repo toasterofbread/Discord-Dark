@@ -7,6 +7,8 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.*;
 import static com.mojang.brigadier.arguments.StringArgumentType.getString;
 import static com.mojang.brigadier.arguments.StringArgumentType.greedyString;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.util.Formatting;
@@ -22,7 +24,7 @@ import org.apache.logging.log4j.Logger;
 import com.spectreseven1138.discorddark.Bot;
 import com.spectreseven1138.discorddark.ArgParser;
 import com.spectreseven1138.discorddark.Config;
-import com.spectreseven1138.discorddark.Translatable;
+import com.spectreseven1138.discorddark.Utils.Translatable;
 
 public class DiscordDark implements ClientModInitializer {
 
@@ -124,7 +126,14 @@ public class DiscordDark implements ClientModInitializer {
                 )
             );
             
-            log("Registered command (name: " + Translatable.gets("command.discorddark.marklocation") + ")", true);
+            dispatcher.register(literal(MAIN_COMMAND)
+                .then(literal(Translatable.gets("command.discorddark.findlocation"))
+                    .then(argument("name", greedyString()).executes(context -> {
+                        command_source = context.getSource();
+                        return commandFindLocation(context, getString(context, "name"));
+                    }))
+                )
+            );
 
             dispatcher.register(literal(MAIN_COMMAND)
                 .then(literal(Translatable.gets("command.discorddark.screenshot"))
@@ -137,15 +146,12 @@ public class DiscordDark implements ClientModInitializer {
                     })
                 )
             );
-
-            log("Registered command (name: " + Translatable.gets("command.discorddark.screenshot") + ")", true);
         });
     }
 
-    private int commandMarkLocation(CommandContext<FabricClientCommandSource> context, String name) {
+    private int commandMarkLocation(CommandContext<FabricClientCommandSource> context, String name) throws CommandSyntaxException {
         if (bot == null) {
-            error("The Discord bot interface has not been created, has the API token been set?", false);
-            return 1;
+            throw new SimpleCommandExceptionType(Text.literal("The Discord bot interface has not been created, has the API token been set?")).create();
         }
 
         screenshot_request.beginRequest(image -> {
@@ -155,10 +161,71 @@ public class DiscordDark implements ClientModInitializer {
         return 1;
     }
 
-    private int commandScreenshot(CommandContext<FabricClientCommandSource> context, String name) {
+    private int commandFindLocation(CommandContext<FabricClientCommandSource> context, String query) throws CommandSyntaxException {
         if (bot == null) {
-            error("The Discord bot interface has not been created, has the API token been set?", false);
-            return 1;
+            throw new SimpleCommandExceptionType(Text.literal("The Discord bot interface has not been created, has the API token been set?")).create();
+        }
+
+        final String formatted_query = query.toLowerCase();
+
+        String result = bot.iterateLocationEmbeds(embed -> {
+            if (embed.name.toLowerCase().contains(formatted_query)) {
+                log("\nLocation found!", false);
+
+                String coordinates_msg;
+
+                int dimension;
+                switch (embed.dimension.toLowerCase()) {
+                    case "overworld": dimension = 1; break;
+                    case "nether": dimension = 2; break;
+                    default: dimension = 0;
+                }
+
+                if (dimension != 0) {
+                    double ox, oy, oz;
+                    double nx, ny, nz;
+
+                    // Overworld
+                    if (dimension == 1) {
+                        ox = embed.x; oy = embed.y; oz = embed.z;
+                        nx = ox / 8.0; ny = oy / 8.0; nz = oz / 8.0;
+                    }
+                    // Nether
+                    else {
+                        nx = embed.x; ny = embed.y; nz = embed.z;
+                        ox = nx * 8.0; oy = ny * 8.0; oz = nz * 8.0;
+                    }
+
+                    coordinates_msg = String.format("Overworld coordinates: %.1f, %.1f, %.1f\nNether coordinates: %.1f, %.1f, %.1f", ox, oy, oz, nx, ny, nz);
+                }
+                else {
+                    coordinates_msg = String.format("Coordinates: %.1f, %.1f, %.1f", embed.x, embed.y, embed.z);
+                }
+
+                log(String.format("\nName: %s\n%s\nBiome: %s\nDimension: %s\n",
+                    embed.name,
+                    coordinates_msg,
+                    embed.biome,
+                    embed.dimension,
+                    embed.player_name
+                ), false, Formatting.WHITE);
+                return false;
+            }
+            return true;
+        });
+
+        if (!result.isEmpty()) {
+            throw new SimpleCommandExceptionType(Text.literal(result)).create();
+        }
+
+        log(String.format("Searching for locations matching '%s'...", query), false);
+
+        return 1;
+    }
+
+    private int commandScreenshot(CommandContext<FabricClientCommandSource> context, String name) throws CommandSyntaxException {
+        if (bot == null) {
+            throw new SimpleCommandExceptionType(Text.literal("The Discord bot interface has not been created, has the API token been set?")).create();
         }
 
         screenshot_request.beginRequest(image -> {
@@ -185,10 +252,14 @@ public class DiscordDark implements ClientModInitializer {
     }
 
     private void log(String message, boolean debug){
+        log(message, debug, Formatting.WHITE);
+    }
+
+    private void log(String message, boolean debug, Formatting formatting){
         LOGGER.log(Level.INFO, "["+MOD_NAME+"] " + message);
         
         if (command_source != null && (!debug || Config.get().show_debug_messages)) {
-            command_source.sendFeedback(Text.literal(message).formatted(Formatting.WHITE));
+            command_source.sendFeedback(Text.literal(message).formatted(formatting));
         }
     }
 }
