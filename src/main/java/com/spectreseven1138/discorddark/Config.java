@@ -23,7 +23,6 @@ import com.spectreseven1138.discorddark.Translatable;
 
 class ConfigFormat {
     String bot_token = "";
-    boolean show_debug_messages = false;
     boolean play_sounds = true;
 
     boolean marklocation_hide_hud = true;
@@ -36,11 +35,47 @@ class ConfigFormat {
     long location_channel_id = 0L;
     long screenshot_channel_id = 0L;
     long backend_channel_id = 0L;
+    
+    boolean show_debug_messages = false;
+    int screenshot_frameskip = 2;
 
     ConfigFormat() {}
 }
 
 public class Config {
+
+    public static Screen buildMenu(Screen parent) {
+        loadConfig();
+
+        ConfigBuilder builder = ConfigBuilder.create().setParentScreen(parent).setTitle(Translatable.get("title.discorddark.config"));
+        builder.setDefaultBackgroundTexture(new Identifier("minecraft:textures/block/sculk_catalyst_top.png"));
+
+        ConfigEntryBuilder entryBuilder = builder.entryBuilder();
+
+        ConfigCategory general = builder.getOrCreateCategory(Translatable.get("category.discorddark.general"));
+        general.addEntry(entryBuilder.startStrField(Translatable.get("config.discorddark.bot_token"), config.bot_token).setTooltip(Translatable.get("config.discorddark.bot_token.tooltip")).setDefaultValue("").setSaveConsumer(value -> {config.bot_token = value; saveConfig();}).build());
+        general.addEntry(entryBuilder.startBooleanToggle(Translatable.get("config.discorddark.play_sounds"), config.play_sounds).setTooltip(Translatable.get("config.discorddark.play_sounds.tooltip")).setDefaultValue(true).setSaveConsumer(value -> {config.play_sounds = value; saveConfig();}).build());
+
+        ConfigCategory server = builder.getOrCreateCategory(Translatable.get("category.discorddark.server"));
+        server.addEntry(entryBuilder.startLongField(Translatable.get("config.discorddark.guild_id"), config.guild_id).setTooltip(Translatable.get("config.discorddark.guild_id.tooltip")).setDefaultValue(0L).setSaveConsumer(value -> {config.guild_id = value; saveConfig();}).build());
+        server.addEntry(entryBuilder.startLongField(Translatable.get("config.discorddark.location_channel_id"), config.location_channel_id).setTooltip(Translatable.get("config.discorddark.location_channel_id.tooltip")).setDefaultValue(0L).setSaveConsumer(value -> {config.location_channel_id = value; saveConfig();}).build());
+        server.addEntry(entryBuilder.startLongField(Translatable.get("config.discorddark.screenshot_channel_id"), config.screenshot_channel_id).setTooltip(Translatable.get("config.discorddark.screenshot_channel_id.tooltip")).setDefaultValue(0L).setSaveConsumer(value -> {config.screenshot_channel_id = value; saveConfig();}).build());
+        server.addEntry(entryBuilder.startLongField(Translatable.get("config.discorddark.backend_channel_id"), config.backend_channel_id).setTooltip(Translatable.get("config.discorddark.backend_channel_id.tooltip")).setDefaultValue(0L).setSaveConsumer(value -> {config.backend_channel_id = value; saveConfig();}).build());
+
+        ConfigCategory marklocation = builder.getOrCreateCategory(Translatable.get("category.discorddark.marklocation"));
+        marklocation.addEntry(entryBuilder.startBooleanToggle(Translatable.get("config.discorddark.marklocation_hide_hud"), config.marklocation_hide_hud).setTooltip(Translatable.get("config.discorddark.marklocation_hide_hud.tooltip")).setDefaultValue(true).setSaveConsumer(value -> {config.marklocation_hide_hud = value; saveConfig();}).build());
+        marklocation.addEntry(entryBuilder.startBooleanToggle(Translatable.get("config.discorddark.marklocation_hide_hand"), config.marklocation_hide_hand).setTooltip(Translatable.get("config.discorddark.marklocation_hide_hand.tooltip")).setDefaultValue(true).setSaveConsumer(value -> {config.marklocation_hide_hand = value; saveConfig();}).build());
+
+        ConfigCategory screenshot = builder.getOrCreateCategory(Translatable.get("category.discorddark.screenshot"));
+        screenshot.addEntry(entryBuilder.startBooleanToggle(Translatable.get("config.discorddark.screenshot_hide_hud"), config.screenshot_hide_hud).setTooltip(Translatable.get("config.discorddark.screenshot_hide_hud.tooltip")).setDefaultValue(false).setSaveConsumer(value -> {config.screenshot_hide_hud = value; saveConfig();}).build());
+        screenshot.addEntry(entryBuilder.startBooleanToggle(Translatable.get("config.discorddark.screenshot_hide_hand"), config.screenshot_hide_hand).setTooltip(Translatable.get("config.discorddark.screenshot_hide_hand.tooltip")).setDefaultValue(false).setSaveConsumer(value -> {config.screenshot_hide_hand = value; saveConfig();}).build());
+        
+        ConfigCategory debug = builder.getOrCreateCategory(Translatable.get("category.discorddark.debug"));
+        debug.addEntry(entryBuilder.startBooleanToggle(Translatable.get("config.discorddark.show_debug_messages"), config.show_debug_messages).setTooltip(Translatable.get("config.discorddark.show_debug_messages.tooltip")).setDefaultValue(false).setSaveConsumer(value -> {config.show_debug_messages = value; saveConfig();}).build());
+        debug.addEntry(entryBuilder.startIntSlider(Translatable.get("config.discorddark.screenshot_frameskip"), config.screenshot_frameskip, 1, 10).setTooltip(Translatable.get("config.discorddark.screenshot_frameskip.tooltip")).setDefaultValue(2).setSaveConsumer(value -> {config.screenshot_frameskip = value; saveConfig();}).build());
+
+        return builder.build();
+    }
 
     public interface SaveCallback {
         public void call();
@@ -99,35 +134,5 @@ public class Config {
         catch (IOException e) {
             throw new JsonParseException(e);
         }
-    }
-
-    public static Screen buildMenu(Screen parent) {
-        loadConfig();
-
-        ConfigBuilder builder = ConfigBuilder.create().setParentScreen(parent).setTitle(Translatable.get("title.discorddark.config"));
-        builder.setDefaultBackgroundTexture(new Identifier("minecraft:textures/block/sculk_catalyst_top.png"));
-
-        ConfigEntryBuilder entryBuilder = builder.entryBuilder();
-
-        ConfigCategory general = builder.getOrCreateCategory(Translatable.get("category.discorddark.general"));
-        general.addEntry(entryBuilder.startStrField(Translatable.get("config.discorddark.bot_token"), config.bot_token).setTooltip(Translatable.get("config.discorddark.bot_token.tooltip")).setDefaultValue("").setSaveConsumer(value -> {config.bot_token = value; saveConfig();}).build());
-        general.addEntry(entryBuilder.startBooleanToggle(Translatable.get("config.discorddark.play_sounds"), config.play_sounds).setTooltip(Translatable.get("config.discorddark.play_sounds.tooltip")).setDefaultValue(true).setSaveConsumer(value -> {config.play_sounds = value; saveConfig();}).build());
-        general.addEntry(entryBuilder.startBooleanToggle(Translatable.get("config.discorddark.show_debug_messages"), config.show_debug_messages).setTooltip(Translatable.get("config.discorddark.show_debug_messages.tooltip")).setDefaultValue(false).setSaveConsumer(value -> {config.show_debug_messages = value; saveConfig();}).build());
-
-        ConfigCategory server = builder.getOrCreateCategory(Translatable.get("category.discorddark.server"));
-        server.addEntry(entryBuilder.startLongField(Translatable.get("config.discorddark.guild_id"), config.guild_id).setTooltip(Translatable.get("config.discorddark.guild_id.tooltip")).setDefaultValue(0L).setSaveConsumer(value -> {config.guild_id = value; saveConfig();}).build());
-        server.addEntry(entryBuilder.startLongField(Translatable.get("config.discorddark.location_channel_id"), config.location_channel_id).setTooltip(Translatable.get("config.discorddark.location_channel_id.tooltip")).setDefaultValue(0L).setSaveConsumer(value -> {config.location_channel_id = value; saveConfig();}).build());
-        server.addEntry(entryBuilder.startLongField(Translatable.get("config.discorddark.screenshot_channel_id"), config.screenshot_channel_id).setTooltip(Translatable.get("config.discorddark.screenshot_channel_id.tooltip")).setDefaultValue(0L).setSaveConsumer(value -> {config.screenshot_channel_id = value; saveConfig();}).build());
-        server.addEntry(entryBuilder.startLongField(Translatable.get("config.discorddark.backend_channel_id"), config.backend_channel_id).setTooltip(Translatable.get("config.discorddark.backend_channel_id.tooltip")).setDefaultValue(0L).setSaveConsumer(value -> {config.backend_channel_id = value; saveConfig();}).build());
-
-        ConfigCategory marklocation = builder.getOrCreateCategory(Translatable.get("category.discorddark.marklocation"));
-        marklocation.addEntry(entryBuilder.startBooleanToggle(Translatable.get("config.discorddark.marklocation_hide_hud"), config.marklocation_hide_hud).setTooltip(Translatable.get("config.discorddark.marklocation_hide_hud.tooltip")).setDefaultValue(true).setSaveConsumer(value -> {config.marklocation_hide_hud = value; saveConfig();}).build());
-        marklocation.addEntry(entryBuilder.startBooleanToggle(Translatable.get("config.discorddark.marklocation_hide_hand"), config.marklocation_hide_hand).setTooltip(Translatable.get("config.discorddark.marklocation_hide_hand.tooltip")).setDefaultValue(true).setSaveConsumer(value -> {config.marklocation_hide_hand = value; saveConfig();}).build());
-
-        ConfigCategory screenshot = builder.getOrCreateCategory(Translatable.get("category.discorddark.screenshot"));
-        screenshot.addEntry(entryBuilder.startBooleanToggle(Translatable.get("config.discorddark.screenshot_hide_hud"), config.screenshot_hide_hud).setTooltip(Translatable.get("config.discorddark.screenshot_hide_hud.tooltip")).setDefaultValue(false).setSaveConsumer(value -> {config.screenshot_hide_hud = value; saveConfig();}).build());
-        screenshot.addEntry(entryBuilder.startBooleanToggle(Translatable.get("config.discorddark.screenshot_hide_hand"), config.screenshot_hide_hand).setTooltip(Translatable.get("config.discorddark.screenshot_hide_hand.tooltip")).setDefaultValue(false).setSaveConsumer(value -> {config.screenshot_hide_hand = value; saveConfig();}).build());
-
-        return builder.build();
     }
 }

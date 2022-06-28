@@ -269,7 +269,10 @@ public class Bot extends ListenerAdapter {
         String player_name = player.getDisplayName().getString();
 
         EmbedBuilder embed = new EmbedBuilder();
-        embed.setTitle(name, null);
+
+        if (name.length() > 0) {
+            embed.setTitle(name, null);
+        }
 
         if (type == EmbedType.MARK_LOCATION) {
             String dimension = world.getRegistryKey().getValue().toString();

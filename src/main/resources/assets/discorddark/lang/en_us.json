@@ -3,11 +3,12 @@
 
     "category.discorddark.general": "General",
     "category.discorddark.server": "Server",
-    "category.discorddark.marklocation": "Marklocation command",
-    "category.discorddark.screenshot": "Uploadscreenshot command",
+    "category.discorddark.marklocation": "marklocation command",
+    "category.discorddark.screenshot": "screenshot command",
+    "category.discorddark.debug": "Debug",
     
     "command.discorddark.marklocation": "marklocation",
-    "command.discorddark.screenshot": "uploadscreenshot",
+    "command.discorddark.screenshot": "screenshot",
 
     "config.discorddark.marklocation_hide_hud": "Hide HUD",
     "config.discorddark.marklocation_hide_hud.tooltip": "Hide the HUD in screenshots",
@@ -22,15 +23,18 @@
     "config.discorddark.bot_token.tooltip": "API token of a bot from the Discord Developer Portal",
     "config.discorddark.play_sounds": "Play sounds",
     "config.discorddark.play_sounds.tooltip": "Enable sounds triggered by commands",
-    "config.discorddark.show_debug_messages": "Show debug messages",
-    "config.discorddark.show_debug_messages.tooltip": "",
-
+    
     "config.discorddark.guild_id": "Guild ID",
     "config.discorddark.guild_id.tooltip": "ID of the guild containing the channels below",
     "config.discorddark.location_channel_id": "Location channel ID",
-    "config.discorddark.location_channel_id.tooltip": "Channel used by /marklocation",
+    "config.discorddark.location_channel_id.tooltip": "Channel used by the marklocation command",
     "config.discorddark.screenshot_channel_id": "Screenshot channel ID",
-    "config.discorddark.screenshot_channel_id.tooltip": "Channel used by /uploadscreenshot",
+    "config.discorddark.screenshot_channel_id.tooltip": "Channel used by the screenshot command",
     "config.discorddark.backend_channel_id": "Backend channel ID",
-    "config.discorddark.backend_channel_id.tooltip": "Channel used by the backend for image storage (muting it is recommended)"
+    "config.discorddark.backend_channel_id.tooltip": "Channel used by the backend for image storage (muting it is recommended)",
+    
+    "config.discorddark.show_debug_messages": "Show debug messages",
+    "config.discorddark.show_debug_messages.tooltip": "",
+    "config.discorddark.screenshot_frameskip": "Screenshot delay",
+    "config.discorddark.screenshot_frameskip.tooltip": "Amount of frames to wait before capturing the framebuffer"
 }

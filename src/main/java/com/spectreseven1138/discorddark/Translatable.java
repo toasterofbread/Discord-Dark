@@ -8,4 +8,7 @@ public class Translatable {
     public static MutableText get(String key) {
         return MutableText.of(new TranslatableTextContent(key));
     }
+    public static String gets(String key) {
+        return MutableText.of(new TranslatableTextContent(key)).getString();
+    }
 }
