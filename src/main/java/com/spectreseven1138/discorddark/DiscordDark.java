@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.*;
 import static com.mojang.brigadier.arguments.StringArgumentType.getString;
 import static com.mojang.brigadier.arguments.StringArgumentType.greedyString;
+import static com.mojang.brigadier.arguments.StringArgumentType.word;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.context.CommandContext;
@@ -25,6 +26,7 @@ import com.spectreseven1138.discorddark.Bot;
 import com.spectreseven1138.discorddark.ArgParser;
 import com.spectreseven1138.discorddark.Config;
 import com.spectreseven1138.discorddark.Utils.Translatable;
+import com.spectreseven1138.discorddark.SendMethod;
 
 public class DiscordDark implements ClientModInitializer {
 
@@ -118,66 +120,112 @@ public class DiscordDark implements ClientModInitializer {
 
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, _registry_access) -> {
             dispatcher.register(literal(MAIN_COMMAND)
-                .then(literal(Translatable.gets("command.discorddark.marklocation"))
-                    .then(argument("name", greedyString()).executes(context -> {
-                        command_source = context.getSource();
-                        return commandMarkLocation(context, getString(context, "name"));
-                    }))
-                )
-            );
-            
-            dispatcher.register(literal(MAIN_COMMAND)
-                .then(literal(Translatable.gets("command.discorddark.findlocation"))
-                    .then(argument("name", greedyString()).executes(context -> {
-                        command_source = context.getSource();
-                        return commandFindLocation(context, getString(context, "name"));
-                    }))
+                .then(literal(Translatable.gets("command.discorddark.send"))
+                    .then(argument("command", word())
+                        .then(argument("name", greedyString()).executes(context -> {
+                            command_source = context.getSource();
+                            return commandSend(context, context.getArgument("command", String.class), getString(context, "name"));
+                        }))
+                    )
                 )
             );
 
             dispatcher.register(literal(MAIN_COMMAND)
-                .then(literal(Translatable.gets("command.discorddark.screenshot"))
-                    .then(argument("name", greedyString()).executes(context -> {
-                        command_source = context.getSource();
-                        return commandScreenshot(context, getString(context, "name"));
-                    })).executes(context -> {
-                        command_source = context.getSource();
-                        return commandScreenshot(context, "");
-                    })
+                .then(literal(Translatable.gets("command.discorddark.send"))
+                    .then(argument("command", word())
+                        .executes(context -> {
+                            command_source = context.getSource();
+                            return commandSend(context, context.getArgument("command", String.class), "");
+                        })
+                    )
                 )
             );
+
+            dispatcher.register(literal(MAIN_COMMAND)
+                .then(literal(Translatable.gets("command.discorddark.find"))
+                    .then(argument("command", word())
+                        .then(argument("query", greedyString()).executes(context -> {
+                            command_source = context.getSource();
+                            return commandFind(context, context.getArgument("command", String.class), getString(context, "query"));
+                        }))
+                    )
+                )
+            );
+
         });
     }
 
-    private int commandMarkLocation(CommandContext<FabricClientCommandSource> context, String name) throws CommandSyntaxException {
+    private int commandSend(CommandContext<FabricClientCommandSource> context, String command, String name) throws CommandSyntaxException {
         if (bot == null) {
-            throw new SimpleCommandExceptionType(Text.literal("The Discord bot interface has not been created, has the API token been set?")).create();
+            throw new SimpleCommandExceptionType(Translatable.get("error.discorddark.bot_interface_missing")).create();
         }
 
-        screenshot_request.beginRequest(image -> {
-            bot.sendEmbed(Bot.EmbedType.MARK_LOCATION, name, image, command_source.getPlayer());
-        }, Config.get().marklocation_hide_hud, Config.get().marklocation_hide_hand);
+        SendMethod called_method = null;
+        for (SendMethod method : Config.get().send_methods) {
+            if (method.commandMatches(command)) {
+                log(String.format("Found matching method '%s'", method.identifier), true);
+                called_method = method;
+                break;
+            }
+            else {
+                log(String.format("Found non-matching method '%s'", method.identifier), true);
+            }
+        }
+
+        if (called_method == null) {
+            throw new SimpleCommandExceptionType(Text.literal(String.format(Translatable.gets("error.discorddark.send_method_not_found"), command))).create();
+        }
+
+        if (called_method.require_name && name.length() == 0) {
+            throw new SimpleCommandExceptionType(Translatable.get("error.discorddark.name_required")).create();
+        }
+
+        if (called_method.include_screenshot) {
+            final SendMethod method = called_method;
+            screenshot_request.beginRequest(image -> {
+                bot.sendEmbed(method, name, image, command_source.getPlayer());
+            }, called_method.hide_hud, called_method.hide_hand);
+        }
+        else {
+            bot.sendEmbed(called_method, name, null, command_source.getPlayer());
+        }
 
         return 1;
     }
 
-    private int commandFindLocation(CommandContext<FabricClientCommandSource> context, String query) throws CommandSyntaxException {
+    private int commandFind(CommandContext<FabricClientCommandSource> context, String command, String query) throws CommandSyntaxException {
         if (bot == null) {
-            throw new SimpleCommandExceptionType(Text.literal("The Discord bot interface has not been created, has the API token been set?")).create();
+            throw new SimpleCommandExceptionType(Translatable.get("error.discorddark.bot_interface_missing")).create();
+        }
+
+        SendMethod called_method = null;
+        for (SendMethod method : Config.get().send_methods) {
+            if (method.commandMatches(command)) {
+                log(String.format("Found matching method '%s'", method.identifier), true);
+                called_method = method;
+                break;
+            }
+            else {
+                log(String.format("Found non-matching method '%s'", method.identifier), true);
+            }
+        }
+
+        if (called_method == null) {
+            throw new SimpleCommandExceptionType(Text.literal(String.format(Translatable.gets("error.discorddark.send_method_not_found"), command))).create();
         }
 
         final String formatted_query = query.toLowerCase();
 
-        String result = bot.iterateLocationEmbeds(embed -> {
+        String result = bot.iterateMethodEmbeds(embed -> {
             if (embed.name.toLowerCase().contains(formatted_query)) {
                 log("\nLocation found!", false);
 
                 String coordinates_msg;
 
                 int dimension;
-                switch (embed.dimension.toLowerCase()) {
-                    case "overworld": dimension = 1; break;
-                    case "nether": dimension = 2; break;
+                switch (embed.dimension) {
+                    case "minecraft:overworld": dimension = 1; break;
+                    case "minecraft:the_nether": dimension = 2; break;
                     default: dimension = 0;
                 }
 
@@ -207,30 +255,18 @@ public class DiscordDark implements ClientModInitializer {
                     coordinates_msg,
                     embed.biome,
                     embed.dimension,
-                    embed.player_name
+                    embed.player
                 ), false, Formatting.WHITE);
                 return false;
             }
             return true;
-        });
+        }, called_method);
 
         if (!result.isEmpty()) {
             throw new SimpleCommandExceptionType(Text.literal(result)).create();
         }
 
         log(String.format("Searching for locations matching '%s'...", query), false);
-
-        return 1;
-    }
-
-    private int commandScreenshot(CommandContext<FabricClientCommandSource> context, String name) throws CommandSyntaxException {
-        if (bot == null) {
-            throw new SimpleCommandExceptionType(Text.literal("The Discord bot interface has not been created, has the API token been set?")).create();
-        }
-
-        screenshot_request.beginRequest(image -> {
-            bot.sendEmbed(Bot.EmbedType.SCREENSHOT, name, image, command_source.getPlayer());
-        }, Config.get().screenshot_hide_hud, Config.get().screenshot_hide_hand);
 
         return 1;
     }

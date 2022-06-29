@@ -32,10 +32,13 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Method;
+import java.util.function.Function;
+import java.util.function.Consumer;
 import com.google.gson.Gson;
 
 import com.spectreseven1138.discorddark.Config;
-import com.spectreseven1138.discorddark.Utils;
+import com.spectreseven1138.discorddark.Utils.Translatable;
+import com.spectreseven1138.discorddark.SendMethod;
 
 public class Bot extends ListenerAdapter {
 
@@ -207,97 +210,150 @@ public class Bot extends ListenerAdapter {
         }
     }
 
-    enum EmbedType {
-        MARK_LOCATION, SCREENSHOT
-    }
+    public void sendEmbed(SendMethod method, String name, NativeImage image, PlayerEntity player) {
 
-    public void sendEmbed(EmbedType type, String name, NativeImage image, PlayerEntity player) {
-
-        if (Config.get().guild_id == 0L) {
+        long guild_id = method.guild_id == 0L ? Config.get().guild_id : method.guild_id;
+        if (guild_id == 0L) {
             logger.log("No guild ID set", 2, false);
             return;
         }
-        Guild guild = bot.getGuildById(Config.get().guild_id);
+        Guild guild = bot.getGuildById(guild_id);
         if (guild == null) {
-            logger.log(String.format("Could not get guild with ID '%d'", Config.get().guild_id), 2, false);
+            logger.log(String.format("Could not get guild with ID '%d'", guild_id), 2, false);
             return;
         }
 
-        long channel_id;
-        switch (type) {
-            case MARK_LOCATION: channel_id = Config.get().location_channel_id; break;
-            case SCREENSHOT: channel_id = Config.get().screenshot_channel_id; break;
-            default: channel_id = 0L;
-        }
-
+        long channel_id = method.channel_id == 0L ? Config.get().default_channel_id : method.channel_id;
         if (channel_id == 0L) {
             logger.log("No channel ID set", 2, false);
             return;
         }
-
         MessageChannel channel = guild.getTextChannelById(channel_id);
         if (channel == null) {
             logger.log(String.format("Could not get channel with ID '%d'", channel_id), 2, false);
             return;
         }
 
-        if (Config.get().backend_channel_id == 0L) {
-            logger.log("No backend channel ID set", 2, false);
-            return;
-        }
-        MessageChannel backend_channel = guild.getTextChannelById(Config.get().backend_channel_id);
-        if (backend_channel == null) {
-            logger.log(String.format("Could not get backend channel with ID '%d'", Config.get().backend_channel_id), 2, false);
-            return;
-        }
-
-        byte[] bytes;
-
-        try {
-            bytes = image.getBytes();
-        } catch (Exception e) {
-            logger.log(e.getMessage(), 2, false);
-            return;
+        MessageChannel backend_channel = null;
+        if (method.include_screenshot) {
+            if (Config.get().backend_channel_id == 0L) {
+                logger.log("No backend channel ID set", 2, false);
+                return;
+            }
+            backend_channel = guild.getTextChannelById(Config.get().backend_channel_id);
+            if (backend_channel == null) {
+                logger.log(String.format("Could not get backend channel with ID '%d'", Config.get().backend_channel_id), 2, false);
+                return;
+            }
         }
 
         double x = player.getX(), y = player.getY(), z = player.getZ();
 
         World world = player.world;
+
         String player_name = player.getDisplayName().getString();
+        String biome = world.getBiomeAccess().getBiome(new BlockPos(x, y, z)).getKey().get().getValue().toString();
+        String biome_formatted;
+        if (biome.startsWith("minecraft:")) {
+            biome_formatted = biome.substring(10).replace("_", " ");
+            biome_formatted = biome_formatted.substring(0, 1).toUpperCase() + biome_formatted.substring(1);
+        }
+        else {
+            biome_formatted = biome;
+        }
+
+        String dimension = world.getRegistryKey().getValue().toString();
+        final String dimension_formatted;
+        switch (dimension) {
+            case "minecraft:overworld": dimension_formatted = Translatable.gets("dimension.discorddark.overworld"); break;
+            case "minecraft:the_nether": dimension_formatted = Translatable.gets("dimension.discorddark.nether"); break;
+            case "minecraft:the_end": dimension_formatted = Translatable.gets("dimension.discorddark.end"); break;
+            default: dimension_formatted = dimension; break;
+        }
 
         EmbedBuilder embed = new EmbedBuilder();
 
-        if (name.length() > 0) {
+        if (method.include_name && name.length() > 0) {
             embed.setTitle(name, null);
         }
 
-        if (type == EmbedType.MARK_LOCATION) {
-            String dimension = world.getRegistryKey().getValue().toString();
+        if (method.include_player) {
+            embed.setAuthor(player_name, null, String.format("https://mc-heads.net/avatar/%s.png", player_name));
+        }
+
+        if (method.use_dimension_colour) {
             switch (dimension) {
-                case "minecraft:overworld": embed.setColor(Color.green); dimension = "Overworld"; break;
-                case "minecraft:the_nether": embed.setColor(Color.red); dimension = "Nether"; break;
-                case "minecraft:the_end": embed.setColor(Color.magenta); dimension = "The End"; break;
-                default: embed.setColor(Color.gray); break;
+                case "minecraft:overworld": embed.setColor(Color.GREEN); break;
+                case "minecraft:the_nether": embed.setColor(Color.RED); break;
+                case "minecraft:the_end": embed.setColor(Color.MAGENTA); break;
             }
-
-            String biome = world.getBiomeAccess().getBiome(new BlockPos(x, y, z)).getKey().get().getValue().toString();
-
-            if (biome.startsWith("minecraft:")) {
-                biome = biome.substring(10).replace("_", " ");
-                biome = biome.substring(0, 1).toUpperCase() + biome.substring(1);
-            }
-
-            embed.addField("Coordinates", String.format("%.1f, %.1f, %.1f", x, y, z), true);
-            embed.addField("Biome", biome, true);
-            embed.addField("Dimension", dimension, true);
         }
-        else if (type == EmbedType.SCREENSHOT) {
-            embed.setFooter(String.format("%.1f, %.1f, %.1f", x, y, z));
+        else {
+            embed.setColor(method.embed_colour);
         }
 
-        embed.setAuthor(player_name, null, String.format("https://mc-heads.net/avatar/%s.png", player_name));
+        Function<SendMethod.InfoType, String> getInfoName = (info_type) -> {
+            switch (info_type) {
+                case NAME: return Translatable.gets("infotype.discorddark.name");
+                case PLAYER: return Translatable.gets("infotype.discorddark.player");
+                case COORDS: return Translatable.gets("infotype.discorddark.coords");
+                case BIOME: return Translatable.gets("infotype.discorddark.biome");
+                case DIMENSION: return Translatable.gets("infotype.discorddark.dimension");
+                default: return "";
+            }
+        };
 
-        if (Config.get().play_sounds) {
+        final String _biome_formatted = biome_formatted;
+        Function<SendMethod.InfoType, String> getInfoValue = (info_type) -> {
+            switch (info_type) {
+                case NAME: return name;
+                case PLAYER: return player_name;
+                case COORDS: {
+                    String prefix;
+                    switch (dimension) {
+                        case "minecraft:overworld": prefix = "\u200b"; break;
+                        case "minecraft:the_nether": prefix = "\u200b\u200b"; break;
+                        case "minecraft:the_end": prefix = "\u200b\u200b\u200b"; break;
+                        default: prefix = ""; break;
+                    }
+                    return prefix + String.format("%.1f, %.1f, %.1f", x, y, z);
+                }
+                case BIOME: return _biome_formatted;
+                case DIMENSION: return dimension_formatted;
+                default: return "";
+            }
+        };
+
+        for (SendMethod.InfoType info_type : method.field_info) {
+            String key = getInfoName.apply(info_type);
+            String value = getInfoValue.apply(info_type);
+            if (key.length() > 0 && value.length() > 0) {
+                embed.addField(key, value, method.inline_fields);
+            }
+        }
+
+        if (!method.footer_info.isEmpty()) {
+            String footer = "";
+            boolean first = true;
+            for (SendMethod.InfoType info_type : method.footer_info) {
+                String value = getInfoValue.apply(info_type);
+                if (value.length() == 0) {
+                    continue;
+                }
+
+                if (first) {
+                    first = false;
+                }
+                else {
+                    footer += " | ";
+                }
+
+                footer += value;
+            }
+            embed.setFooter(footer);
+        }
+
+        if (method.play_sound) {
             world.playSound(
                 x, y, z,
                 new SoundEvent(new Identifier("minecraft:block.sculk_sensor.clicking"), 15f),
@@ -308,48 +364,71 @@ public class Bot extends ListenerAdapter {
             );
         }
         
-        backend_channel.sendFile(bytes, "screenshot.png").queue(response -> {
-            embed.setImage(response.getAttachments().get(0).getUrl());
-            channel.sendMessageEmbeds(embed.build()).queue();
+        Consumer<EmbedBuilder> send = (e) -> {
+            channel.sendMessageEmbeds(e.build()).queue();
+            logger.log(String.format("Sent %s to [%s | #%s]", method.identifier, guild.getName(), channel.getName()), 0, false);
+        };
 
-            String message;
-            switch (type) {
-                case MARK_LOCATION: message = "Location marked in [%s | #%s]"; break;
-                case SCREENSHOT: message = "Screenshot uploaded to [%s | #%s]"; break;
-                default: message = "";
+        if (method.include_screenshot && image != null) {
+            byte[] bytes;
+            try {
+                bytes = image.getBytes();
+            } catch (Exception e) {
+                logger.log(e.getMessage(), 2, false);
+                return;
             }
 
-            logger.log(String.format(message, guild.getName(), channel.getName()), 0, false);
-        });
+            backend_channel.sendFile(bytes, "screenshot.png").queue(response -> {
+                embed.setImage(response.getAttachments().get(0).getUrl());
+                send.accept(embed);
+            });
+        }
+        else {
+            send.accept(embed);
+        }
     }
 
-    public class MarkedLocation {
+    public class EmbedInfo {
         String name;
+        boolean has_name = false;
+
         String biome;
+        boolean has_biome = false;
+
         String dimension;
-        String player_name;
+        boolean has_dimension = false;
+
+        String player;
+        boolean has_player = false;
+        
         String image_url;
+        boolean has_image = false;
+
         double x;
         double y;
         double z;
-        int i = 0;
+        boolean has_coords = false;
+
+        int i;
     }
 
-    public String iterateLocationEmbeds(Utils.ValueCallback<MarkedLocation, Boolean> callback) {
-        if (Config.get().guild_id == 0L) {
+    public String iterateMethodEmbeds(Function<EmbedInfo, Boolean> callback, SendMethod method) {
+        long guild_id = method.guild_id == 0L ? Config.get().guild_id : method.guild_id;
+        if (guild_id == 0L) {
             return "No guild ID set";
         }
-        Guild guild = bot.getGuildById(Config.get().guild_id);
+        Guild guild = bot.getGuildById(guild_id);
         if (guild == null) {
-            return String.format("Could not get guild with ID '%d'", Config.get().guild_id);
+            return String.format("Could not get guild with ID '%d'", guild_id);
         }
 
-        if (Config.get().location_channel_id == 0L) {
-            return "No location channel ID set";
+        long channel_id = method.channel_id == 0L ? Config.get().default_channel_id : method.channel_id;
+        if (channel_id == 0L) {
+            return "No channel ID set";
         }
-        MessageChannel channel = guild.getTextChannelById(Config.get().location_channel_id);
+        MessageChannel channel = guild.getTextChannelById(channel_id);
         if (channel == null) {
-            return String.format("Could not get channel with ID '%d'", Config.get().location_channel_id);
+            return String.format("Could not get channel with ID '%d'", channel_id);
         }
         
         User self = bot.getSelfUser();
@@ -366,54 +445,100 @@ public class Bot extends ListenerAdapter {
 
             MessageEmbed embed = embeds.get(0);
             
-            MarkedLocation location = new MarkedLocation();
-            location.name = embed.getTitle();
-            location.player_name = embed.getAuthor().getName();
-            location.image_url = embed.getImage().getUrl();
+            EmbedInfo info = new EmbedInfo();
+            
+            // TODO | info.has_name
+            info.name = embed.getTitle();
+
+            if (embed.getAuthor() != null) {
+                info.player = embed.getAuthor().getName();
+                info.has_player = true;
+            }
+
+            if (embed.getImage() != null) {
+                info.image_url = embed.getImage().getUrl();
+                info.has_image = true;
+            }
 
             for (MessageEmbed.Field field : embed.getFields()) {
                 if (!field.isInline()) {
                     continue;
                 }
 
-                switch (field.getName()) {
-                    case "Coordinates": {
-                        
-                        final String value = field.getValue();
-                        String current = "";
+                final String name = field.getName();
+                final String value = field.getValue();
 
-                        int index = 0;
+                if (name == Translatable.gets("infotype.discorddark.name")) {
+                    info.name = value;
+                    info.has_name = true;
+                }
+                else if (name == Translatable.gets("infotype.discorddark.player")) {
+                    info.player = value;
+                    info.has_player = true;
+                }
+                else if (name == Translatable.gets("infotype.discorddark.coords")) {
+                    String current = "";
 
-                        for (int i = 0, length = value.length(); i < length; i++) {
-                            final char c = value.charAt(i);
-                            if (c == ' ') {
-                                continue;
-                            }
-                            if (c == ',') {
-                                if (index++ == 0) {
-                                    location.x = Double.parseDouble(current);
-                                }
-                                else {
-                                    location.y = Double.parseDouble(current);
-                                }
-                                current = "";
+                    int coord = 0;
+                    int dimension = -1;
+
+                    for (int i = 0, length = value.length(); i < length; i++) {
+                        final char c = value.charAt(i);
+                        if (c == ' ') {
+                            continue;
+                        }
+                        else if (c == ',') {
+                            if (coord++ == 0) {
+                                info.x = Double.parseDouble(current);
                             }
                             else {
-                                current += c;
+                                info.y = Double.parseDouble(current);
                             }
+                            current = "";
                         }
-
-                        location.z = Double.parseDouble(current);
-
-                        break;
+                        else if (c == '\u200b') {
+                            dimension++;
+                        }
+                        else {
+                            current += c;
+                        }
                     }
-                    case "Biome": location.biome = field.getValue(); break;
-                    case "Dimension": location.dimension = field.getValue(); break;
+
+                    info.z = Double.parseDouble(current);
+                    info.has_coords = true;
+
+                    if (dimension > -1) {
+                        switch (dimension) {
+                            case 0: info.dimension = "minecraft:overworld"; break;
+                            case 1: info.dimension = "minecraft:the_nether"; break;
+                            case 2: info.dimension = "minecraft:the_end"; break;
+                        }
+                        info.has_dimension = true;
+                    }
+                }
+                else if (name == Translatable.gets("infotype.discorddark.biome")) {
+                    info.biome = value;
+                    info.has_biome = true;
+                }
+                else if (name == Translatable.gets("infotype.discorddark.dimension")) {
+                    if (value == Translatable.gets("dimension.discorddark.overworld")) {
+                        info.dimension = "minecraft:overworld";
+                    }
+                    else if (value == Translatable.gets("dimension.discorddark.nether")) {
+                        info.dimension = "minecraft:the_nether";
+                    }
+                    else if (value == Translatable.gets("dimension.discorddark.end")) {
+                        info.dimension = "minecraft:the_end";
+                    }
+                    else {
+                        info.dimension = value;
+                    }
+                    info.has_dimension = true;
                 }
             }
 
-            location.i++;
-            return callback.call(location);
+            info.i++;
+            return callback.apply(info);
         });
 
         return "";

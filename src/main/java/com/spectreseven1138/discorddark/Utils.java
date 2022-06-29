@@ -13,12 +13,4 @@ public class Utils {
             return MutableText.of(new TranslatableTextContent(key)).getString();
         }
     }
-
-    public interface ValueCallback<T, R> {
-        public R call(T value);
-    }
-
-    public interface ResultCallback<T> {
-        public void call(boolean error, T result);
-    }
 }
