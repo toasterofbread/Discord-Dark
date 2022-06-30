@@ -34,18 +34,18 @@ import com.spectreseven1138.discorddark.SendMethod;
 
 public class Config {
 
-    static class ConfigFormat {
-        String bot_token = "";
-        boolean play_external_sounds = true;
+    public static class ConfigFormat {
+        public String bot_token = "";
+        public boolean play_external_sounds = true;
 
-        long guild_id = 0L;
-        long default_channel_id = 0L;
-        long backend_channel_id = 0L;
+        public long guild_id = 0L;
+        public long default_channel_id = 0L;
+        public long backend_channel_id = 0L;
         
-        boolean show_debug_messages = false;
-        int screenshot_frameskip = 2;
+        public boolean show_debug_messages = false;
+        public int screenshot_frameskip = 2;
 
-        List<SendMethod> send_methods = getDefaultMethodList();
+        public List<SendMethod> send_methods = getDefaultMethodList();
 
         ConfigFormat() {}
     }
@@ -72,16 +72,16 @@ public class Config {
         methods.addEntry(entryBuilder.startLongField(Translatable.get("config.discorddark.backend_channel_id"), config.backend_channel_id).setTooltip(Translatable.get("config.discorddark.backend_channel_id.tooltip")).setDefaultValue(0L).setSaveConsumer(value -> {config.backend_channel_id = value;}).build());
 
         methods.addEntry(new NestedListListEntry<SendMethod, MultiElementListEntry<SendMethod>>(
-            Translatable.get("config.discorddark.methods"), // fieldName
-            config.send_methods, // value
-            true, // defaultExpanded
-            Optional::empty, // tooltipSupplier | TODO
-            list -> {config.send_methods = list;}, // saveConsumer
-            () -> { return getDefaultMethodList(); }, // defaultValue
-            entryBuilder.getResetButtonKey(), // resetButtonKey
-            true, // deleteButtonEnabled
-            true, // insertInFront
-            (_method, _nestedListListEntry) -> { // createNewCell
+            Translatable.get("config.discorddark.methods"),
+            config.send_methods,
+            true,
+            Optional::empty,
+            list -> {config.send_methods = list;},
+            () -> { return getDefaultMethodList(); },
+            entryBuilder.getResetButtonKey(),
+            true,
+            true,
+            (_method, _nestedListListEntry) -> {
                 if (_method == null) {
                     _method = new SendMethod();
                 }
