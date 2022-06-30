@@ -26,6 +26,7 @@ import com.spectreseven1138.discorddark.Bot;
 import com.spectreseven1138.discorddark.ArgParser;
 import com.spectreseven1138.discorddark.Config;
 import com.spectreseven1138.discorddark.Utils.Translatable;
+import com.spectreseven1138.discorddark.Utils.Dimension;
 import com.spectreseven1138.discorddark.SendMethod;
 
 public class DiscordDark implements ClientModInitializer {
@@ -87,7 +88,7 @@ public class DiscordDark implements ClientModInitializer {
     }
     public static final ScreenshotRequest screenshot_request = new ScreenshotRequest();
 
-    private FabricClientCommandSource command_source;
+    private static FabricClientCommandSource command_source;
 
     private void createBot() {
         if (!bot_token.equals(Config.get().bot_token)) {
@@ -217,46 +218,61 @@ public class DiscordDark implements ClientModInitializer {
         final String formatted_query = query.toLowerCase();
 
         String result = bot.iterateMethodEmbeds(embed -> {
+
+            if (!embed.has_name) {
+                return true;
+            }
+
             if (embed.name.toLowerCase().contains(formatted_query)) {
+
                 log("\nLocation found!", false);
 
-                String coordinates_msg;
+                String message = String.format("\nName: %s\n", embed.name);
 
-                int dimension;
-                switch (embed.dimension) {
-                    case "minecraft:overworld": dimension = 1; break;
-                    case "minecraft:the_nether": dimension = 2; break;
-                    default: dimension = 0;
-                }
+                if (embed.has_coords) {
+                    int dimension = 0;
 
-                if (dimension != 0) {
-                    double ox, oy, oz;
-                    double nx, ny, nz;
-
-                    // Overworld
-                    if (dimension == 1) {
-                        ox = embed.x; oy = embed.y; oz = embed.z;
-                        nx = ox / 8.0; ny = oy / 8.0; nz = oz / 8.0;
+                    if (embed.has_dimension) {
+                        switch (embed.dimension) {
+                            case "minecraft:overworld": dimension = 1; break;
+                            case "minecraft:the_nether": dimension = 2; break;
+                            default: dimension = 0;
+                        }
                     }
-                    // Nether
+
+                    if (dimension != 0) {
+                        double ox, oy, oz;
+                        double nx, ny, nz;
+
+                        // Overworld
+                        if (dimension == 1) {
+                            ox = embed.x; oy = embed.y; oz = embed.z;
+                            nx = ox / 8.0; ny = oy / 8.0; nz = oz / 8.0;
+                        }
+                        // Nether
+                        else {
+                            nx = embed.x; ny = embed.y; nz = embed.z;
+                            ox = nx * 8.0; oy = ny * 8.0; oz = nz * 8.0;
+                        }
+
+                        message += String.format("Overworld coordinates: %.1f, %.1f, %.1f\nNether coordinates: %.1f, %.1f, %.1f\n", ox, oy, oz, nx, ny, nz);
+                    }
                     else {
-                        nx = embed.x; ny = embed.y; nz = embed.z;
-                        ox = nx * 8.0; oy = ny * 8.0; oz = nz * 8.0;
+                        message += String.format("Coordinates: %.1f, %.1f, %.1f\n", embed.x, embed.y, embed.z);
                     }
-
-                    coordinates_msg = String.format("Overworld coordinates: %.1f, %.1f, %.1f\nNether coordinates: %.1f, %.1f, %.1f", ox, oy, oz, nx, ny, nz);
                 }
                 else {
-                    coordinates_msg = String.format("Coordinates: %.1f, %.1f, %.1f", embed.x, embed.y, embed.z);
+                    message += "Coordinates: unknown\n";
                 }
 
-                log(String.format("\nName: %s\n%s\nBiome: %s\nDimension: %s\n",
-                    embed.name,
-                    coordinates_msg,
-                    embed.biome,
-                    embed.dimension,
-                    embed.player
-                ), false, Formatting.WHITE);
+                message += String.format("Biome: %s\n", embed.has_biome ? embed.biome : "unknown");
+
+                message += String.format("Dimension: %s\n", embed.has_dimension ? Dimension.toReadable(embed.dimension) : "unknown");
+
+                message += String.format("Player: %s\n", embed.has_player ? embed.player : "unknown");
+
+                log(message, false, Formatting.WHITE);
+
                 return false;
             }
             return true;
@@ -271,7 +287,7 @@ public class DiscordDark implements ClientModInitializer {
         return 1;
     }
 
-    private void error(String message, boolean debug) {
+    public static void error(String message, boolean debug) {
         LOGGER.error("["+MOD_NAME+"] " + message);
 
         if (command_source != null && (!debug || Config.get().show_debug_messages)) {
@@ -279,7 +295,7 @@ public class DiscordDark implements ClientModInitializer {
         }
     }
 
-    private void warn(String message, boolean debug) {
+    public static void warn(String message, boolean debug) {
         LOGGER.warn("["+MOD_NAME+"] " + message);
 
         if (command_source != null && (!debug || Config.get().show_debug_messages)) {
@@ -287,11 +303,11 @@ public class DiscordDark implements ClientModInitializer {
         }
     }
 
-    private void log(String message, boolean debug){
+    public static void log(String message, boolean debug){
         log(message, debug, Formatting.WHITE);
     }
 
-    private void log(String message, boolean debug, Formatting formatting){
+    public static void log(String message, boolean debug, Formatting formatting){
         LOGGER.log(Level.INFO, "["+MOD_NAME+"] " + message);
         
         if (command_source != null && (!debug || Config.get().show_debug_messages)) {

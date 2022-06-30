@@ -36,7 +36,7 @@ public class Config {
 
     static class ConfigFormat {
         String bot_token = "";
-        boolean play_sounds = true;
+        boolean play_external_sounds = true;
 
         long guild_id = 0L;
         long default_channel_id = 0L;
@@ -61,17 +61,8 @@ public class Config {
         ConfigCategory general = builder.getOrCreateCategory(Translatable.get("category.discorddark.general"));
         general.addEntry(entryBuilder.startStrField(Translatable.get("config.discorddark.bot_token"), config.bot_token).setTooltip(Translatable.get("config.discorddark.bot_token.tooltip")).setDefaultValue("").setSaveConsumer(value -> {config.bot_token = value;}).build());
         general.addEntry(entryBuilder.startLongField(Translatable.get("config.discorddark.default_guild_id"), config.guild_id).setTooltip(Translatable.get("config.discorddark.default_guild_id.tooltip")).setDefaultValue(0L).setSaveConsumer(value -> {config.guild_id = value;}).build());
+        general.addEntry(entryBuilder.startBooleanToggle(Translatable.get("config.discorddark.play_external_sounds"), config.play_external_sounds).setTooltip(Translatable.get("config.discorddark.play_external_sounds.tooltip")).setDefaultValue(true).setSaveConsumer(value -> {config.play_external_sounds = value;}).build());
 
-        // ConfigCategory server = builder.getOrCreateCategory(Translatable.get("category.discorddark.server"));
-
-        // ConfigCategory marklocation = builder.getOrCreateCategory(Translatable.get("category.discorddark.marklocation"));
-        // marklocation.addEntry(entryBuilder.startBooleanToggle(Translatable.get("config.discorddark.marklocation_hide_hud"), config.marklocation_hide_hud).setTooltip(Translatable.get("config.discorddark.marklocation_hide_hud.tooltip")).setDefaultValue(true).setSaveConsumer(value -> {config.marklocation_hide_hud = value;}).build());
-        // marklocation.addEntry(entryBuilder.startBooleanToggle(Translatable.get("config.discorddark.marklocation_hide_hand"), config.marklocation_hide_hand).setTooltip(Translatable.get("config.discorddark.marklocation_hide_hand.tooltip")).setDefaultValue(true).setSaveConsumer(value -> {config.marklocation_hide_hand = value;}).build());
-
-        // ConfigCategory screenshot = builder.getOrCreateCategory(Translatable.get("category.discorddark.screenshot"));
-        // screenshot.addEntry(entryBuilder.startBooleanToggle(Translatable.get("config.discorddark.screenshot_hide_hud"), config.screenshot_hide_hud).setTooltip(Translatable.get("config.discorddark.screenshot_hide_hud.tooltip")).setDefaultValue(false).setSaveConsumer(value -> {config.screenshot_hide_hud = value;}).build());
-        // screenshot.addEntry(entryBuilder.startBooleanToggle(Translatable.get("config.discorddark.screenshot_hide_hand"), config.screenshot_hide_hand).setTooltip(Translatable.get("config.discorddark.screenshot_hide_hand.tooltip")).setDefaultValue(false).setSaveConsumer(value -> {config.screenshot_hide_hand = value;}).build());
-        
         ConfigCategory debug = builder.getOrCreateCategory(Translatable.get("category.discorddark.debug"));
         debug.addEntry(entryBuilder.startBooleanToggle(Translatable.get("config.discorddark.show_debug_messages"), config.show_debug_messages).setTooltip(Translatable.get("config.discorddark.show_debug_messages.tooltip")).setDefaultValue(false).setSaveConsumer(value -> {config.show_debug_messages = value;}).build());
         debug.addEntry(entryBuilder.startIntSlider(Translatable.get("config.discorddark.screenshot_frameskip"), config.screenshot_frameskip, 1, 10).setTooltip(Translatable.get("config.discorddark.screenshot_frameskip.tooltip")).setDefaultValue(2).setSaveConsumer(value -> {config.screenshot_frameskip = value;}).build());
@@ -105,6 +96,7 @@ public class Config {
                         entryBuilder.startBooleanToggle(Translatable.get("config.discorddark.method.use_dimension_colour"), method.use_dimension_colour).setDefaultValue(SendMethod.d_use_dimension_colour).setTooltip(Translatable.get("config.discorddark.method.use_dimension_colour.tooltip")).setSaveConsumer(value -> {method.use_dimension_colour = value;}).build(),
                         entryBuilder.startBooleanToggle(Translatable.get("config.discorddark.method.play_sound"), method.play_sound).setDefaultValue(SendMethod.d_play_sound).setTooltip(Translatable.get("config.discorddark.method.play_sound.tooltip")).setSaveConsumer(value -> {method.play_sound = value;}).build(),
                         entryBuilder.startBooleanToggle(Translatable.get("config.discorddark.method.require_name"), method.require_name).setDefaultValue(SendMethod.d_require_name).setTooltip(Translatable.get("config.discorddark.method.require_name.tooltip")).setSaveConsumer(value -> {method.require_name = value;}).build(),
+                        entryBuilder.startBooleanToggle(Translatable.get("config.discorddark.method.notify"), method.notify).setDefaultValue(SendMethod.d_notify).setTooltip(Translatable.get("config.discorddark.method.notify.tooltip")).setSaveConsumer(value -> {method.notify = value;}).build(),
                         
                         entryBuilder.startBooleanToggle(Translatable.get("config.discorddark.method.inline_fields"), method.inline_fields).setDefaultValue(SendMethod.d_inline_fields).setTooltip(Translatable.get("config.discorddark.method.inline_fields.tooltip")).setSaveConsumer(value -> {method.inline_fields = value;}).build(),
                         entryBuilder.startBooleanToggle(Translatable.get("config.discorddark.method.include_name"), method.include_name).setDefaultValue(SendMethod.d_include_name).setTooltip(Translatable.get("config.discorddark.method.include_name.tooltip")).setSaveConsumer(value -> {method.include_name = value;}).build(),

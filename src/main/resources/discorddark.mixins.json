@@ -8,7 +8,8 @@
   "client": [
     "Client",
     "HUD",
-    "Hand"
+    "Hand",
+    "ChatHudListenerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

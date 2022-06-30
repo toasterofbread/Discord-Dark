@@ -18,6 +18,8 @@
 
     "config.discorddark.bot_token": "Bot API token",
     "config.discorddark.bot_token.tooltip": "API token of a bot from the Discord Developer Portal",
+    "config.discorddark.play_external_sounds": "Play external sounds",
+    "config.discorddark.play_external_sounds.tooltip": "Play sounds triggered by other players",
     
     "config.discorddark.default_guild_id": "Default guild ID",
     "config.discorddark.default_guild_id.tooltip": "",
@@ -51,6 +53,8 @@
     "config.discorddark.method.play_sound.tooltip": "Play a sound on trigger",
     "config.discorddark.method.require_name": "Require name",
     "config.discorddark.method.require_name.tooltip": "Require a name to be inputted with the command",
+    "config.discorddark.method.notify": "Notify in chat",
+    "config.discorddark.method.notify.tooltip": "Send a message in chat when this method is used",
 
     "config.discorddark.method.hide_hud": "Hide HUD",
     "config.discorddark.method.hide_hud.tooltip": "Hide the HUD in screenshots",

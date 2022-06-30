@@ -34,6 +34,7 @@ public class SendMethod {
     boolean use_dimension_colour = true;
     boolean play_sound = true;
     boolean require_name = false;
+    boolean notify = true;
 
     boolean include_name = true;
     boolean include_player = true;
@@ -56,6 +57,7 @@ public class SendMethod {
     static final boolean d_hide_hud = false;
     static final boolean d_hide_hand = false;
     static final boolean d_require_name = false;
+    static final boolean d_notify = true;
 
     List<InfoType> field_info = Lists.newArrayList();
     List<InfoType> footer_info = Lists.newArrayList();

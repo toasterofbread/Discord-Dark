@@ -12,7 +12,7 @@ import net.dv8tion.jda.api.entities.MessageHistory;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.texture.NativeImage;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.util.math.BlockPos;
@@ -210,7 +210,7 @@ public class Bot extends ListenerAdapter {
         }
     }
 
-    public void sendEmbed(SendMethod method, String name, NativeImage image, PlayerEntity player) {
+    public void sendEmbed(SendMethod method, String name, NativeImage image, ClientPlayerEntity player) {
 
         long guild_id = method.guild_id == 0L ? Config.get().guild_id : method.guild_id;
         if (guild_id == 0L) {
@@ -366,7 +366,15 @@ public class Bot extends ListenerAdapter {
         
         Consumer<EmbedBuilder> send = (e) -> {
             channel.sendMessageEmbeds(e.build()).queue();
-            logger.log(String.format("Sent %s to [%s | #%s]", method.identifier, guild.getName(), channel.getName()), 0, false);
+
+            String message = String.format("Sent %s %sto [%s | #%s]", method.identifier, name.length() == 0 ? "" : String.format("'%s' ", name), guild.getName(), channel.getName());
+            if (method.notify) {
+                player.sendChatMessage(String.format("[%s] %s", DiscordDark.MOD_NAME, message));
+            }
+            else {
+                logger.log(message, 0, false);
+            }
+
         };
 
         if (method.include_screenshot && image != null) {
@@ -447,8 +455,10 @@ public class Bot extends ListenerAdapter {
             
             EmbedInfo info = new EmbedInfo();
             
-            // TODO | info.has_name
-            info.name = embed.getTitle();
+            if (embed.getTitle() != null) {
+                info.name = embed.getTitle();
+                info.has_name = true;
+            }
 
             if (embed.getAuthor() != null) {
                 info.player = embed.getAuthor().getName();
@@ -461,22 +471,18 @@ public class Bot extends ListenerAdapter {
             }
 
             for (MessageEmbed.Field field : embed.getFields()) {
-                if (!field.isInline()) {
-                    continue;
-                }
-
                 final String name = field.getName();
                 final String value = field.getValue();
 
-                if (name == Translatable.gets("infotype.discorddark.name")) {
+                if (name.equals(Translatable.gets("infotype.discorddark.name"))) {
                     info.name = value;
                     info.has_name = true;
                 }
-                else if (name == Translatable.gets("infotype.discorddark.player")) {
+                else if (name.equals(Translatable.gets("infotype.discorddark.player"))) {
                     info.player = value;
                     info.has_player = true;
                 }
-                else if (name == Translatable.gets("infotype.discorddark.coords")) {
+                else if (name.equals(Translatable.gets("infotype.discorddark.coords"))) {
                     String current = "";
 
                     int coord = 0;
@@ -516,24 +522,27 @@ public class Bot extends ListenerAdapter {
                         info.has_dimension = true;
                     }
                 }
-                else if (name == Translatable.gets("infotype.discorddark.biome")) {
+                else if (name.equals(Translatable.gets("infotype.discorddark.biome"))) {
                     info.biome = value;
                     info.has_biome = true;
                 }
-                else if (name == Translatable.gets("infotype.discorddark.dimension")) {
-                    if (value == Translatable.gets("dimension.discorddark.overworld")) {
+                else if (name.equals(Translatable.gets("infotype.discorddark.dimension"))) {
+                    if (value.equals(Translatable.gets("dimension.discorddark.overworld"))) {
                         info.dimension = "minecraft:overworld";
                     }
-                    else if (value == Translatable.gets("dimension.discorddark.nether")) {
+                    else if (value.equals(Translatable.gets("dimension.discorddark.nether"))) {
                         info.dimension = "minecraft:the_nether";
                     }
-                    else if (value == Translatable.gets("dimension.discorddark.end")) {
+                    else if (value.equals(Translatable.gets("dimension.discorddark.end"))) {
                         info.dimension = "minecraft:the_end";
                     }
                     else {
                         info.dimension = value;
                     }
                     info.has_dimension = true;
+                }
+                else {
+                    logger.log(name, 2, true);
                 }
             }
 
