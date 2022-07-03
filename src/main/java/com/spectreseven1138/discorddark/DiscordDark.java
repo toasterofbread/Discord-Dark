@@ -14,6 +14,9 @@ import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.util.Formatting;
 import net.minecraft.text.Text;
+import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry;
+import net.minecraft.util.Identifier;
+import net.minecraft.command.argument.serialize.ConstantArgumentSerializer;
 
 import javax.security.auth.login.LoginException;
 import java.lang.Math;
@@ -28,6 +31,7 @@ import com.spectreseven1138.discorddark.Config;
 import com.spectreseven1138.discorddark.Utils.Translatable;
 import com.spectreseven1138.discorddark.Utils.Dimension;
 import com.spectreseven1138.discorddark.SendMethod;
+import com.spectreseven1138.discorddark.SendMethodArgumentType;
 
 public class DiscordDark implements ClientModInitializer {
 
@@ -119,13 +123,15 @@ public class DiscordDark implements ClientModInitializer {
 
         Config.setSaveCallback(() -> {createBot();});
 
+        ArgumentTypeRegistry.registerArgumentType(new Identifier("discorddark", "sendmethod"), SendMethodArgumentType.class, ConstantArgumentSerializer.of(SendMethodArgumentType::sendMethod)); 
+
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, _registry_access) -> {
             dispatcher.register(literal(MAIN_COMMAND)
                 .then(literal(Translatable.gets("command.discorddark.send"))
-                    .then(argument("command", word())
+                    .then(argument("method", SendMethodArgumentType.sendMethod())
                         .then(argument("name", greedyString()).executes(context -> {
                             command_source = context.getSource();
-                            return commandSend(context, context.getArgument("command", String.class), getString(context, "name"));
+                            return commandSend(context, SendMethodArgumentType.getSendMethod(context, "method"), getString(context, "name"));
                         }))
                     )
                 )
@@ -133,10 +139,10 @@ public class DiscordDark implements ClientModInitializer {
 
             dispatcher.register(literal(MAIN_COMMAND)
                 .then(literal(Translatable.gets("command.discorddark.send"))
-                    .then(argument("command", word())
+                    .then(argument("method", SendMethodArgumentType.sendMethod())
                         .executes(context -> {
                             command_source = context.getSource();
-                            return commandSend(context, context.getArgument("command", String.class), "");
+                            return commandSend(context, SendMethodArgumentType.getSendMethod(context, "method"), "");
                         })
                     )
                 )
@@ -144,10 +150,10 @@ public class DiscordDark implements ClientModInitializer {
 
             dispatcher.register(literal(MAIN_COMMAND)
                 .then(literal(Translatable.gets("command.discorddark.find"))
-                    .then(argument("command", word())
+                    .then(argument("method", SendMethodArgumentType.sendMethod())
                         .then(argument("query", greedyString()).executes(context -> {
                             command_source = context.getSource();
-                            return commandFind(context, context.getArgument("command", String.class), getString(context, "query"));
+                            return commandFind(context, SendMethodArgumentType.getSendMethod(context, "method"), getString(context, "query"));
                         }))
                     )
                 )
@@ -156,63 +162,31 @@ public class DiscordDark implements ClientModInitializer {
         });
     }
 
-    private int commandSend(CommandContext<FabricClientCommandSource> context, String command, String name) throws CommandSyntaxException {
+    private int commandSend(CommandContext<FabricClientCommandSource> context, SendMethod send_method, String name) throws CommandSyntaxException {
         if (bot == null) {
             throw new SimpleCommandExceptionType(Translatable.get("error.discorddark.bot_interface_missing")).create();
         }
 
-        SendMethod called_method = null;
-        for (SendMethod method : Config.get().send_methods) {
-            if (method.commandMatches(command)) {
-                log(String.format("Found matching method '%s'", method.identifier), true);
-                called_method = method;
-                break;
-            }
-            else {
-                log(String.format("Found non-matching method '%s'", method.identifier), true);
-            }
-        }
-
-        if (called_method == null) {
-            throw new SimpleCommandExceptionType(Text.literal(String.format(Translatable.gets("error.discorddark.send_method_not_found"), command))).create();
-        }
-
-        if (called_method.require_name && name.length() == 0) {
+        if (send_method.require_name && name.length() == 0) {
             throw new SimpleCommandExceptionType(Translatable.get("error.discorddark.name_required")).create();
         }
 
-        if (called_method.include_screenshot) {
-            final SendMethod method = called_method;
+        if (send_method.include_screenshot) {
+            final SendMethod method = send_method;
             screenshot_request.beginRequest(image -> {
                 bot.sendEmbed(method, name, image, command_source.getPlayer());
-            }, called_method.hide_hud, called_method.hide_hand);
+            }, send_method.hide_hud, send_method.hide_hand);
         }
         else {
-            bot.sendEmbed(called_method, name, null, command_source.getPlayer());
+            bot.sendEmbed(send_method, name, null, command_source.getPlayer());
         }
 
         return 1;
     }
 
-    private int commandFind(CommandContext<FabricClientCommandSource> context, String command, String query) throws CommandSyntaxException {
+    private int commandFind(CommandContext<FabricClientCommandSource> context, SendMethod send_method, String query) throws CommandSyntaxException {
         if (bot == null) {
             throw new SimpleCommandExceptionType(Translatable.get("error.discorddark.bot_interface_missing")).create();
-        }
-
-        SendMethod called_method = null;
-        for (SendMethod method : Config.get().send_methods) {
-            if (method.commandMatches(command)) {
-                log(String.format("Found matching method '%s'", method.identifier), true);
-                called_method = method;
-                break;
-            }
-            else {
-                log(String.format("Found non-matching method '%s'", method.identifier), true);
-            }
-        }
-
-        if (called_method == null) {
-            throw new SimpleCommandExceptionType(Text.literal(String.format(Translatable.gets("error.discorddark.send_method_not_found"), command))).create();
         }
 
         final String formatted_query = query.toLowerCase();
@@ -276,7 +250,7 @@ public class DiscordDark implements ClientModInitializer {
                 return false;
             }
             return true;
-        }, called_method);
+        }, send_method);
 
         if (!result.isEmpty()) {
             throw new SimpleCommandExceptionType(Text.literal(result)).create();

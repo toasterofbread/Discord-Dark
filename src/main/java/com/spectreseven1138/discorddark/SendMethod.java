@@ -23,8 +23,8 @@ public class SendMethod {
         return ret.toArray(new Text[0]);
     }
 
-    public boolean commandMatches(String command) {
-        return command.toLowerCase().equals(identifier.toLowerCase());
+    public boolean methodMatches(String method) {
+        return method.toLowerCase().equals(identifier.toLowerCase());
     }
 
     String identifier = "";
