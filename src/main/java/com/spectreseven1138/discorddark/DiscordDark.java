@@ -107,7 +107,7 @@ public class DiscordDark implements ClientModInitializer {
                 });
                 bot_token = Config.get().bot_token;
                 log("Created bot interface", true);
-            } catch (LoginException e) {
+            } catch (Exception e) {
                 error(String.format("Caught exception while creating bot interface: %s", e.getMessage()), true);
                 bot = null;
                 bot_token = "";
