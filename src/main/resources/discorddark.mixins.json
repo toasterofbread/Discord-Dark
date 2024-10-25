@@ -9,7 +9,7 @@
     "Client",
     "HUD",
     "Hand",
-    "ChatHudListenerMixin"
+    "MessageHandlerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

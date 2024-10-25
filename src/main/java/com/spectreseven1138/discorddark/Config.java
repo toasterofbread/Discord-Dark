@@ -54,7 +54,7 @@ public class Config {
         loadConfig();
 
         ConfigBuilder builder = ConfigBuilder.create().setParentScreen(parent).setTitle(Translatable.get("title.discorddark.config"));
-        builder.setDefaultBackgroundTexture(new Identifier("minecraft:textures/block/sculk_catalyst_top.png"));
+        builder.setDefaultBackgroundTexture(Identifier.of("minecraft:textures/block/sculk_catalyst_top.png"));
 
         ConfigEntryBuilder entryBuilder = builder.entryBuilder();
 

@@ -11,6 +11,10 @@ bin/
 .classpath
 .project
 
+# Intellij
+.idea/
+local.properties
+
 # Fabric
 run/
 

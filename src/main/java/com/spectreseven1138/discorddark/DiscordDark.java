@@ -1,4 +1,4 @@
-package com.spectreseven1138.discorddark;;
+package com.spectreseven1138.discorddark;
 
 import net.fabricmc.api.ClientModInitializer;
 
@@ -123,7 +123,7 @@ public class DiscordDark implements ClientModInitializer {
 
         Config.setSaveCallback(() -> {createBot();});
 
-        ArgumentTypeRegistry.registerArgumentType(new Identifier("discorddark", "sendmethod"), SendMethodArgumentType.class, ConstantArgumentSerializer.of(SendMethodArgumentType::sendMethod)); 
+        ArgumentTypeRegistry.registerArgumentType(Identifier.of("discorddark", "sendmethod"), SendMethodArgumentType.class, ConstantArgumentSerializer.of(SendMethodArgumentType::sendMethod));
 
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, _registry_access) -> {
             dispatcher.register(literal(MAIN_COMMAND)

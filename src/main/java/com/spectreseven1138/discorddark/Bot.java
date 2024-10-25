@@ -1,44 +1,44 @@
 package com.spectreseven1138.discorddark;
 
+import com.google.gson.Gson;
+import com.spectreseven1138.discorddark.Utils.Translatable;
+
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.MessageChannel;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.GatewayIntent;
-import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
-import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.MessageHistory;
-
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.world.World;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.client.util.Session;
+import net.minecraft.client.session.Session;
+import net.minecraft.client.texture.NativeImage;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 
 import java.awt.Color;
-import java.io.ByteArrayInputStream;
-import javax.security.auth.login.LoginException;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.io.File;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Method;
-import java.util.function.Function;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
-import com.google.gson.Gson;
+import java.util.function.Function;
 
-import com.spectreseven1138.discorddark.Config;
-import com.spectreseven1138.discorddark.Utils.Translatable;
-import com.spectreseven1138.discorddark.SendMethod;
+import javax.security.auth.login.LoginException;
 
 public class Bot extends ListenerAdapter {
 
@@ -123,7 +123,7 @@ public class Bot extends ListenerAdapter {
     public void commandListClients(List<String> args, MessageReceivedEvent event) {
         MinecraftClient client = MinecraftClient.getInstance();
         Session session = client.getSession();
-        send(event, String.format(" - %s [%s] In world: %b", session.getUsername(), session.getUuid(), client.player));
+        send(event, String.format(" - %s [%s] In world: %b", session.getUsername(), session.getSessionId(), client.player));
     }
 
     private MessageChannel getChannelFromMessage(String message, Guild guild) {
@@ -247,12 +247,10 @@ public class Bot extends ListenerAdapter {
             }
         }
 
-        double x = player.getX(), y = player.getY(), z = player.getZ();
-
-        World world = player.world;
+        World world = player.getWorld();
 
         String player_name = player.getDisplayName().getString();
-        String biome = world.getBiomeAccess().getBiome(new BlockPos(x, y, z)).getKey().get().getValue().toString();
+        String biome = world.getBiomeAccess().getBiome(player.getBlockPos()).getKey().get().getValue().toString();
         String biome_formatted;
         if (biome.startsWith("minecraft:")) {
             biome_formatted = biome.substring(10).replace("_", " ");
@@ -316,7 +314,7 @@ public class Bot extends ListenerAdapter {
                         case "minecraft:the_end": prefix = "\u200b\u200b\u200b"; break;
                         default: prefix = ""; break;
                     }
-                    return prefix + String.format("%.1f, %.1f, %.1f", x, y, z);
+                    return prefix + String.format("%.1f, %.1f, %.1f", player.getX(), player.getY(), player.getZ());
                 }
                 case BIOME: return _biome_formatted;
                 case DIMENSION: return dimension_formatted;
@@ -355,8 +353,8 @@ public class Bot extends ListenerAdapter {
 
         if (method.play_sound) {
             world.playSound(
-                x, y, z,
-                new SoundEvent(new Identifier("minecraft:block.sculk_sensor.clicking"), 15f),
+                player.getX(), player.getY(), player.getZ(),
+                new SoundEvent(Identifier.of("minecraft:block.sculk_sensor.clicking"), Optional.of(15f)),
                 SoundCategory.BLOCKS,
                 1f,
                 1f,
@@ -369,7 +367,7 @@ public class Bot extends ListenerAdapter {
 
             String message = String.format("Sent %s %sto [%s | #%s]", method.identifier, name.length() == 0 ? "" : String.format("'%s' ", name), guild.getName(), channel.getName());
             if (method.notify) {
-                player.sendChatMessage(String.format("[%s] %s", DiscordDark.MOD_NAME, message));
+                player.sendMessage(Text.literal(String.format("[%s] %s", DiscordDark.MOD_NAME, message)), false);
             }
             else {
                 logger.log(message, 0, false);
@@ -378,18 +376,21 @@ public class Bot extends ListenerAdapter {
         };
 
         if (method.include_screenshot && image != null) {
-            byte[] bytes;
+            File file;
             try {
-                bytes = image.getBytes();
+                file = File.createTempFile("dd-image", null, null);
+                image.writeTo(file);
             } catch (Exception e) {
                 logger.log(e.getMessage(), 2, false);
                 return;
             }
 
-            backend_channel.sendFile(bytes, "screenshot.png").queue(response -> {
+            backend_channel.sendFile(file, "screenshot.png").queue(response -> {
                 embed.setImage(response.getAttachments().get(0).getUrl());
                 send.accept(embed);
             });
+
+            file.deleteOnExit();
         }
         else {
             send.accept(embed);

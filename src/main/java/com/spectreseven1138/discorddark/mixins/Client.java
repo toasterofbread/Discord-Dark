@@ -12,8 +12,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(MinecraftClient.class)
 public abstract class Client {
-    @Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/BackgroundRenderer;method_23792()V", ordinal = 0), method = "render(Z)V")
-    private void onRender(CallbackInfo ci) {
+    @Inject(at = @At("HEAD"), method = "render(Z)V")
+    private void render(CallbackInfo ci) {
         if (DiscordDark.screenshot_request.shouldProvideScreenshot()) {
             DiscordDark.screenshot_request.provideScreenshot(ScreenshotRecorder.takeScreenshot(MinecraftClient.getInstance().getFramebuffer()));
         }
