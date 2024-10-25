@@ -1,4 +1,4 @@
-package com.spectreseven1138.discorddark;
+package dev.toastbits.discorddark;
 
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -8,14 +8,8 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
 
-import com.google.common.collect.Lists;
 import java.util.concurrent.CompletableFuture;
-
-import com.spectreseven1138.discorddark.Config;
-import com.spectreseven1138.discorddark.SendMethod;
-import com.spectreseven1138.discorddark.Utils.Translatable;
 
 public final class SendMethodArgumentType implements ArgumentType<SendMethod> {
 
@@ -25,7 +19,7 @@ public final class SendMethodArgumentType implements ArgumentType<SendMethod> {
     public SendMethod parse(StringReader reader) throws CommandSyntaxException {
 
         if (Config.get().send_methods.isEmpty()) {
-            throw new SimpleCommandExceptionType(Translatable.get("error.discorddark.no_send_methods")).createWithContext(reader);
+            throw new SimpleCommandExceptionType(Utils.Translatable.get("error.discorddark.no_send_methods")).createWithContext(reader);
         }
 
         int beginning = reader.getCursor();
@@ -45,7 +39,7 @@ public final class SendMethodArgumentType implements ArgumentType<SendMethod> {
             }
         }
         
-        throw new SimpleCommandExceptionType(Translatable.get("error.discorddark.invalid_send_method")).createWithContext(reader);
+        throw new SimpleCommandExceptionType(Utils.Translatable.get("error.discorddark.invalid_send_method")).createWithContext(reader);
     }
 
     @Override

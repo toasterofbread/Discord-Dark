@@ -1,4 +1,4 @@
-package com.spectreseven1138.discorddark;
+package dev.toastbits.discorddark;
 
 import static net.fabricmc.api.EnvType.CLIENT;
 
@@ -7,9 +7,6 @@ import com.terraformersmc.modmenu.api.ModMenuApi;
 
 import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
-
-import com.spectreseven1138.discorddark.Utils.Translatable;
-import com.spectreseven1138.discorddark.Config;
 
 @Environment(CLIENT)
 public class ModMenuApiImpl implements ModMenuApi {

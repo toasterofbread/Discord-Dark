@@ -1,4 +1,4 @@
-package com.spectreseven1138.discorddark;
+package dev.toastbits.discorddark;
 
 import net.fabricmc.api.ClientModInitializer;
 
@@ -7,7 +7,7 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.*;
 import static com.mojang.brigadier.arguments.StringArgumentType.getString;
 import static com.mojang.brigadier.arguments.StringArgumentType.greedyString;
-import static com.mojang.brigadier.arguments.StringArgumentType.word;
+
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.context.CommandContext;
@@ -18,20 +18,14 @@ import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry;
 import net.minecraft.util.Identifier;
 import net.minecraft.command.argument.serialize.ConstantArgumentSerializer;
 
-import javax.security.auth.login.LoginException;
 import java.lang.Math;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.spectreseven1138.discorddark.Bot;
-import com.spectreseven1138.discorddark.ArgParser;
-import com.spectreseven1138.discorddark.Config;
-import com.spectreseven1138.discorddark.Utils.Translatable;
-import com.spectreseven1138.discorddark.Utils.Dimension;
-import com.spectreseven1138.discorddark.SendMethod;
-import com.spectreseven1138.discorddark.SendMethodArgumentType;
+import dev.toastbits.discorddark.Utils.Translatable;
+import dev.toastbits.discorddark.Utils.Dimension;
 
 public class DiscordDark implements ClientModInitializer {
 

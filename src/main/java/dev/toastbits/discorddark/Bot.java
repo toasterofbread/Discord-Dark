@@ -1,7 +1,6 @@
-package com.spectreseven1138.discorddark;
+package dev.toastbits.discorddark;
 
 import com.google.gson.Gson;
-import com.spectreseven1138.discorddark.Utils.Translatable;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
@@ -22,7 +21,6 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 import java.awt.Color;
@@ -263,9 +261,9 @@ public class Bot extends ListenerAdapter {
         String dimension = world.getRegistryKey().getValue().toString();
         final String dimension_formatted;
         switch (dimension) {
-            case "minecraft:overworld": dimension_formatted = Translatable.gets("dimension.discorddark.overworld"); break;
-            case "minecraft:the_nether": dimension_formatted = Translatable.gets("dimension.discorddark.nether"); break;
-            case "minecraft:the_end": dimension_formatted = Translatable.gets("dimension.discorddark.end"); break;
+            case "minecraft:overworld": dimension_formatted = Utils.Translatable.gets("dimension.discorddark.overworld"); break;
+            case "minecraft:the_nether": dimension_formatted = Utils.Translatable.gets("dimension.discorddark.nether"); break;
+            case "minecraft:the_end": dimension_formatted = Utils.Translatable.gets("dimension.discorddark.end"); break;
             default: dimension_formatted = dimension; break;
         }
 
@@ -292,11 +290,11 @@ public class Bot extends ListenerAdapter {
 
         Function<SendMethod.InfoType, String> getInfoName = (info_type) -> {
             switch (info_type) {
-                case NAME: return Translatable.gets("infotype.discorddark.name");
-                case PLAYER: return Translatable.gets("infotype.discorddark.player");
-                case COORDS: return Translatable.gets("infotype.discorddark.coords");
-                case BIOME: return Translatable.gets("infotype.discorddark.biome");
-                case DIMENSION: return Translatable.gets("infotype.discorddark.dimension");
+                case NAME: return Utils.Translatable.gets("infotype.discorddark.name");
+                case PLAYER: return Utils.Translatable.gets("infotype.discorddark.player");
+                case COORDS: return Utils.Translatable.gets("infotype.discorddark.coords");
+                case BIOME: return Utils.Translatable.gets("infotype.discorddark.biome");
+                case DIMENSION: return Utils.Translatable.gets("infotype.discorddark.dimension");
                 default: return "";
             }
         };
@@ -475,15 +473,15 @@ public class Bot extends ListenerAdapter {
                 final String name = field.getName();
                 final String value = field.getValue();
 
-                if (name.equals(Translatable.gets("infotype.discorddark.name"))) {
+                if (name.equals(Utils.Translatable.gets("infotype.discorddark.name"))) {
                     info.name = value;
                     info.has_name = true;
                 }
-                else if (name.equals(Translatable.gets("infotype.discorddark.player"))) {
+                else if (name.equals(Utils.Translatable.gets("infotype.discorddark.player"))) {
                     info.player = value;
                     info.has_player = true;
                 }
-                else if (name.equals(Translatable.gets("infotype.discorddark.coords"))) {
+                else if (name.equals(Utils.Translatable.gets("infotype.discorddark.coords"))) {
                     String current = "";
 
                     int coord = 0;
@@ -523,18 +521,18 @@ public class Bot extends ListenerAdapter {
                         info.has_dimension = true;
                     }
                 }
-                else if (name.equals(Translatable.gets("infotype.discorddark.biome"))) {
+                else if (name.equals(Utils.Translatable.gets("infotype.discorddark.biome"))) {
                     info.biome = value;
                     info.has_biome = true;
                 }
-                else if (name.equals(Translatable.gets("infotype.discorddark.dimension"))) {
-                    if (value.equals(Translatable.gets("dimension.discorddark.overworld"))) {
+                else if (name.equals(Utils.Translatable.gets("infotype.discorddark.dimension"))) {
+                    if (value.equals(Utils.Translatable.gets("dimension.discorddark.overworld"))) {
                         info.dimension = "minecraft:overworld";
                     }
-                    else if (value.equals(Translatable.gets("dimension.discorddark.nether"))) {
+                    else if (value.equals(Utils.Translatable.gets("dimension.discorddark.nether"))) {
                         info.dimension = "minecraft:the_nether";
                     }
-                    else if (value.equals(Translatable.gets("dimension.discorddark.end"))) {
+                    else if (value.equals(Utils.Translatable.gets("dimension.discorddark.end"))) {
                         info.dimension = "minecraft:the_end";
                     }
                     else {

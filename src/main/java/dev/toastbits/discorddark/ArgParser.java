@@ -1,4 +1,4 @@
-package com.spectreseven1138.discorddark;
+package dev.toastbits.discorddark;
 
 import java.util.List;
 

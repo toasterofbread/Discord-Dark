@@ -1,8 +1,8 @@
-package com.spectreseven1138.discorddark.mixins;
+package dev.toastbits.discorddark.mixins;
 
 import com.mojang.authlib.GameProfile;
-import com.spectreseven1138.discorddark.Config;
-import com.spectreseven1138.discorddark.DiscordDark;
+import dev.toastbits.discorddark.Config;
+import dev.toastbits.discorddark.DiscordDark;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;

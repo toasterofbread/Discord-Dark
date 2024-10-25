@@ -5,22 +5,22 @@
   "name": "Discord-Dark",
   "description": "Adds commands which allow interaction between Minecraft and a Discord bot",
   "authors": [
-    "spectreseven1138"
+    "toasterofbread"
   ],
   "contributors": [],
   "contact": {
-    "homepage": "https://github.com/spectreseven1138/Discord-Dark",
-    "issues": "https://github.com/spectreseven1138/Discord-Dark/issues",
-    "sources": "https://github.com/spectreseven1138/Discord-Dark"
+    "homepage": "https://github.com/toasterofbread/Discord-Dark",
+    "issues": "https://github.com/toasterofbread/Discord-Dark/issues",
+    "sources": "https://github.com/toasterofbread/Discord-Dark"
   },
   "license": "MIT",
   "icon": "assets/discorddark/icon.png",
   "environment": "*",
   "entrypoints": {
     "main": [],
-    "client": ["com.spectreseven1138.discorddark.DiscordDark"],
+    "client": ["dev.toastbits.discorddark.DiscordDark"],
     "server": [],
-    "modmenu": ["com.spectreseven1138.discorddark.ModMenuApiImpl"]
+    "modmenu": ["dev.toastbits.discorddark.ModMenuApiImpl"]
   },
   "mixins": [
     "discorddark.mixins.json"

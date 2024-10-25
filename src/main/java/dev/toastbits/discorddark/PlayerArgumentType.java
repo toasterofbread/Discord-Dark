@@ -1,4 +1,4 @@
-package com.spectreseven1138.discorddark;
+package dev.toastbits.discorddark;
 
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -11,13 +11,9 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 
-import org.apache.commons.lang3.SystemUtils;
-import java.util.Collection;
-import com.google.common.collect.Lists;
 import java.util.concurrent.CompletableFuture;
 
-import static com.spectreseven1138.discorddark.DiscordDark.log;
-import com.spectreseven1138.discorddark.Utils.Translatable;
+import static dev.toastbits.discorddark.DiscordDark.log;
 
 public final class PlayerArgumentType implements ArgumentType<AbstractClientPlayerEntity> {
 
@@ -55,10 +51,10 @@ public final class PlayerArgumentType implements ArgumentType<AbstractClientPlay
         Text message;
 
         if (no_players) {
-            message = Translatable.get("error.discorddark.no_players");
+            message = Utils.Translatable.get("error.discorddark.no_players");
         }
         else {
-            message = Text.literal(String.format(Translatable.gets("error.discorddark.invalid_player"), player_string));
+            message = Text.literal(String.format(Utils.Translatable.gets("error.discorddark.invalid_player"), player_string));
         }
 
         throw new SimpleCommandExceptionType(message).createWithContext(reader);

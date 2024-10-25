@@ -1,11 +1,9 @@
-package com.spectreseven1138.discorddark;
+package dev.toastbits.discorddark;
 
 import java.util.List;
 import com.google.common.collect.Lists;
 import net.minecraft.text.Text;
 import static net.minecraft.text.Text.literal;
-
-import com.spectreseven1138.discorddark.Utils.Translatable;
 
 public class SendMethod {
 
@@ -17,7 +15,7 @@ public class SendMethod {
         List<Text> ret = Lists.newArrayList(literal(main_tooltip));
         String types = "";
         for (SendMethod.InfoType type : SendMethod.InfoType.values()) {
-            types += String.format("\n%s: %s", type.name(), Translatable.gets(String.format("infotype.discorddark.%s.tooltip", type.name().toLowerCase())));
+            types += String.format("\n%s: %s", type.name(), Utils.Translatable.gets(String.format("infotype.discorddark.%s.tooltip", type.name().toLowerCase())));
         }
         ret.add(literal(types));
         return ret.toArray(new Text[0]);
