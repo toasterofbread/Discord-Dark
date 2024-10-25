@@ -21,7 +21,10 @@
     "config.discorddark.bot_token.tooltip": "API token of a bot from the Discord Developer Portal",
     "config.discorddark.play_external_sounds": "Play external sounds",
     "config.discorddark.play_external_sounds.tooltip": "Play sounds triggered by other players",
-    
+
+    "config.discorddark.copy_config_to_clipboard": "Copy config to clipboard",
+    "config.discorddark.paste_config_from_clipboard": "Paste config from clipboard",
+
     "config.discorddark.default_guild_id": "Default guild ID",
     "config.discorddark.default_guild_id.tooltip": "",
     "config.discorddark.default_channel_id": "Default channel ID",

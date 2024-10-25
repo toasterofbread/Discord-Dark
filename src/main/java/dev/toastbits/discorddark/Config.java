@@ -1,10 +1,15 @@
 package dev.toastbits.discorddark;
 
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.util.Clipboard;
+import net.minecraft.client.util.Window;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.client.gui.screen.Screen;
 
 import net.fabricmc.loader.api.FabricLoader;
 
+import dev.toastbits.discorddark.component.ButtonListEntry;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
@@ -13,6 +18,7 @@ import me.shedaniel.clothconfig2.gui.entries.MultiElementListEntry;
 import me.shedaniel.clothconfig2.gui.entries.EnumListEntry;
 
 import org.apache.commons.io.IOUtils;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -54,7 +60,9 @@ public class Config {
         ConfigCategory general = builder.getOrCreateCategory(Utils.Translatable.get("category.discorddark.general"));
         general.addEntry(entryBuilder.startStrField(Utils.Translatable.get("config.discorddark.bot_token"), config.bot_token).setTooltip(Utils.Translatable.get("config.discorddark.bot_token.tooltip")).setDefaultValue("").setSaveConsumer(value -> {config.bot_token = value;}).build());
         general.addEntry(entryBuilder.startLongField(Utils.Translatable.get("config.discorddark.default_guild_id"), config.guild_id).setTooltip(Utils.Translatable.get("config.discorddark.default_guild_id.tooltip")).setDefaultValue(0L).setSaveConsumer(value -> {config.guild_id = value;}).build());
-        general.addEntry(entryBuilder.startBooleanToggle(Utils.Translatable.get("config.discorddark.play_external_sounds"), config.play_external_sounds).setTooltip(Utils.Translatable.get("config.discorddark.play_external_sounds.tooltip")).setDefaultValue(true).setSaveConsumer(value -> {config.play_external_sounds = value;}).build());
+
+        general.addEntry(new ButtonListEntry(Utils.Translatable.get("config.discorddark.copy_config_to_clipboard"), Config::copyConfigToClipboard, false));
+        general.addEntry(new ButtonListEntry(Utils.Translatable.get("config.discorddark.paste_config_from_clipboard"), Config::pasteConfigFromClipboard, false));
 
         ConfigCategory debug = builder.getOrCreateCategory(Utils.Translatable.get("category.discorddark.debug"));
         debug.addEntry(entryBuilder.startBooleanToggle(Utils.Translatable.get("config.discorddark.show_debug_messages"), config.show_debug_messages).setTooltip(Utils.Translatable.get("config.discorddark.show_debug_messages.tooltip")).setDefaultValue(false).setSaveConsumer(value -> {config.show_debug_messages = value;}).build());
@@ -142,7 +150,8 @@ public class Config {
             saveConfig();
         });
 
-        return builder.build();
+        screen = builder.build();
+        return screen;
     }
 
     static private List<SendMethod> getDefaultMethodList() {
@@ -187,11 +196,14 @@ public class Config {
     }
 
     private static ConfigFormat config = null;
+    private static Screen screen = null;
 
     public static ConfigFormat get() {
         if (config == null) {
             loadConfig();
         }
+        System.out.println("GET");
+        System.out.println(config.bot_token);
         return config;
     }
 
@@ -200,16 +212,17 @@ public class Config {
     }
 
     public static void loadConfig() {
+        System.out.println("LOAD");
         Path path = getConfigPath();
         if (Files.exists(path)) {
             try (InputStream stream = Files.newInputStream(path)) {
-                Gson g = new Gson();
-                config = g.fromJson(IOUtils.toString(stream, StandardCharsets.UTF_8), ConfigFormat.class);
+                setConfigJson(IOUtils.toString(stream, StandardCharsets.UTF_8));
             }
             catch (IOException e) {
                 throw new JsonParseException(e);
             }
-        } else {
+        }
+        else {
             config = new ConfigFormat();
         }
     }
@@ -228,11 +241,55 @@ public class Config {
 
         try {
             Files.createDirectories(path.getParent());
-            Gson g = new Gson();
-            Files.write(path, g.toJson(config).getBytes(StandardCharsets.UTF_8));
+            Files.write(path, getConfigJson().getBytes(StandardCharsets.UTF_8));
         }
         catch (IOException e) {
             throw new JsonParseException(e);
         }
+    }
+
+    private static Window getWindow(Screen screen) {
+        try {
+            MinecraftClient client = (MinecraftClient)Screen.class.getDeclaredField("client").get(screen);
+            return client.getWindow();
+        }
+        catch (IllegalAccessException | NoSuchFieldException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static void copyConfigToClipboard() {
+        long window = getWindow(screen).getHandle();
+        Clipboard clipboard = new Clipboard();
+        clipboard.setClipboard(window, getConfigJson());
+    }
+
+    private static void pasteConfigFromClipboard() {
+        long window = getWindow(screen).getHandle();
+        Clipboard clipboard = new Clipboard();
+        String json = clipboard.getClipboard(window, (int a, long b) -> {});
+
+        try {
+            setConfigJson(json);
+        }
+        catch (Throwable e) {
+            System.out.println("JSON parsing failed");
+            System.out.println(json);
+            e.printStackTrace();
+            return;
+        }
+
+        saveConfig();
+        screen.close();
+    }
+
+    private static String getConfigJson() {
+        Gson g = new Gson();
+        return g.toJson(config);
+    }
+
+    private static void setConfigJson(String json) {
+        Gson g = new Gson();
+        config = g.fromJson(json, ConfigFormat.class);
     }
 }
