@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "discorddark",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "name": "Discord-Dark",
   "description": "Adds commands which allow interaction between Minecraft and a Discord bot",
   "authors": [
