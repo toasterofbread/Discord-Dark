@@ -31,6 +31,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.google.common.collect.Lists;
 
+import javax.annotation.Nullable;
+
 public class Config {
 
     public static class ConfigFormat {
@@ -197,6 +199,7 @@ public class Config {
 
     private static ConfigFormat config = null;
     private static Screen screen = null;
+    public static MinecraftClient client = null;
 
     public static ConfigFormat get() {
         if (config == null) {
@@ -248,26 +251,40 @@ public class Config {
         }
     }
 
-    private static Window getWindow(Screen screen) {
+    @Nullable
+    private static Window getWindow() {
+        if (client != null) {
+            return client.getWindow();
+        }
+
         try {
             MinecraftClient client = (MinecraftClient)Screen.class.getDeclaredField("client").get(screen);
             return client.getWindow();
         }
         catch (IllegalAccessException | NoSuchFieldException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
+            return null;
         }
     }
 
     private static void copyConfigToClipboard() {
-        long window = getWindow(screen).getHandle();
+        Window window = getWindow();
+        if (window == null) {
+            return;
+        }
+
         Clipboard clipboard = new Clipboard();
-        clipboard.setClipboard(window, getConfigJson());
+        clipboard.setClipboard(window.getHandle(), getConfigJson());
     }
 
     private static void pasteConfigFromClipboard() {
-        long window = getWindow(screen).getHandle();
+        Window window = getWindow();
+        if (window == null) {
+            return;
+        }
+
         Clipboard clipboard = new Clipboard();
-        String json = clipboard.getClipboard(window, (int a, long b) -> {});
+        String json = clipboard.getClipboard(window.getHandle(), (int a, long b) -> {});
 
         try {
             setConfigJson(json);
